@@ -7,9 +7,24 @@
     <input type="search" name="q" placeholder="Buscar título, artista, tag..." value="{{ q }}" autocomplete="off">
     <select name="key" aria-label="Filtrar por tonalidad">
       <option value="">Todas las tonalidades</option>
+      <optgroup label="Mayores">
       {% for k in keys_sharp %}
       <option value="{{ k }}" {% if key_filter==k %}selected{% endif %}>{{ k }}</option>
       {% endfor %}
+      {% for k in keys_flat %}
+        {% if k not in keys_sharp %}
+        <option value="{{ k }}" {% if key_filter==k %}selected{% endif %}>{{ k }}</option>
+        {% endif %}
+      {% endfor %}
+      </optgroup>
+      <optgroup label="Menores">
+      {% for k in keys_sharp %}
+      <option value="{{ k }}m" {% if key_filter==(k + 'm') %}selected{% endif %}>{{ k }}m</option>
+      {% endfor %}
+      {% for k in keys_flat %}
+      <option value="{{ k }}m" {% if key_filter==(k + 'm') %}selected{% endif %}>{{ k }}m</option>
+      {% endfor %}
+      </optgroup>
     </select>
     <button type="submit" class="btn-primary">Buscar</button>
     {% if q or key_filter or tag_filter %}

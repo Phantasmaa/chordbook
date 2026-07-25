@@ -11,14 +11,26 @@
   <div class="meta-field">
     <label>Tonalidad</label>
     <select id="song-key">
+      <optgroup label="Mayores (sostenidos)">
       {% for k in keys_sharp %}
       <option value="{{ k }}" {% if song.key==k %}selected{% endif %}>{{ k }}</option>
       {% endfor %}
-      <optgroup label="Bemoles">
+      </optgroup>
+      <optgroup label="Mayores (bemoles)">
       {% for k in keys_flat %}
         {% if k not in keys_sharp %}
         <option value="{{ k }}" {% if song.key==k %}selected{% endif %}>{{ k }}</option>
         {% endif %}
+      {% endfor %}
+      </optgroup>
+      <optgroup label="Menores (sostenidos)">
+      {% for k in keys_sharp %}
+      <option value="{{ k }}m" {% if song.key == k + 'm' %}selected{% endif %}>{{ k }}m</option>
+      {% endfor %}
+      </optgroup>
+      <optgroup label="Menores (bemoles)">
+      {% for k in keys_flat %}
+      <option value="{{ k }}m" {% if song.key == k + 'm' %}selected{% endif %}>{{ k }}m</option>
       {% endfor %}
       </optgroup>
     </select>
