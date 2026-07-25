@@ -47,18 +47,21 @@
   {% set glyph = glyph_map.get(badge_type, 'V') %}
   {% set repeat_n = ns.counts.get(sig, 0) %}
   {% set block_label = block.name %}
-  {% if repeat_n > 1 %}
-    {% set block_label = block_label ~ ' ×' ~ repeat_n %}
-  {% endif %}
 
+  {# Marker glyph + label inline at the very start of the first line,
+     not on its own line. Repeats get a small ×N pill. #}
+  {% set first = (block.lines or [])[0] %}
   <section class="preview-block" data-type="{{ block.type }}">
-    <div class="preview-section-badge {{ badge_type }}">
-      <span class="badge-glyph">{{ glyph }}</span>
-      <span class="badge-label">{{ block_label }}</span>
-      {% if repeat_n > 1 %}
-        <span class="badge-repeat">se repite</span>
-      {% endif %}
-    </div>
+    {% if block.lines %}
+      <div class="preview-line">
+        <div class="preview-chord-row preview-chord-row-first">
+          <span class="preview-marker-inline {{ badge_type }}">
+            <span class="preview-marker-glyph">{{ glyph }}</span>
+            <span class="preview-marker-label">{{ block_label }}{% if repeat_n > 1 %} ×{{ repeat_n }}{% endif %}</span>
+          </span>
+        </div>
+      </div>
+    {% endif %}
     {% for line in block.lines %}
       {% set chord_map = {} %}
       {% for c in (line.chords or []) %}

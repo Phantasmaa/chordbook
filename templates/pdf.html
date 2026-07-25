@@ -35,43 +35,64 @@ h1.song-title {
   margin: 0;
   padding: 0;
   page-break-inside: auto;
+  border-left: 0; /* Manuel: el indicador debe ir al inicio de la línea, no ocupar todo */
 }
 .block + .block {
-  margin-top: 10pt;
+  margin-top: 8pt;
 }
-.block-repeat {
-  font-size: 8pt;
-  color: #666;
-  font-weight: 400;
-  margin-left: 4pt;
-}
-.section-badge {
+
+/* Inline marker — small glyph + label, printed at the start of each block. */
+.block-marker {
   display: inline-flex;
   align-items: center;
   gap: 4pt;
   font-family: 'Helvetica', 'Arial', sans-serif;
-  font-size: 9pt;
+  font-size: 8.5pt;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5pt;
-  padding: 3pt 8pt;
-  border-radius: 4pt;
-  margin: 0 0 4pt 0;
-  border-left: 4pt solid currentColor;
+  letter-spacing: 0.4pt;
+  padding: 1pt 6pt 1pt 4pt;
+  border-radius: 3pt;
+  margin: 0 0 3pt 0;
+  background: rgba(0, 0, 0, 0.04);
 }
-.section-badge .glyph {
-  font-size: 11pt;
-  margin-right: 2pt;
-  filter: brightness(1.1);
+.block-marker .marker-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14pt;
+  height: 14pt;
+  padding: 0 3pt;
+  font-size: 9pt;
+  font-weight: 800;
+  border-radius: 2pt;
+  color: #ffffff;
 }
-.section-badge.intro    { color: #6b21a8; background: #f5f3ff; border-color: #6b21a8; }
-.section-badge.verse    { color: #1d4ed8; background: #eff6ff; border-color: #1d4ed8; }
-.section-badge.chorus   { color: #c2410c; background: #fff7ed; border-color: #c2410c; }
-.section-badge.bridge   { color: #be185d; background: #fdf2f8; border-color: #be185d; }
-.section-badge.outro    { color: #4b5563; background: #f3f4f6; border-color: #4b5563; }
-.section-badge.pre_chorus { color: #0f766e; background: #f0fdfa; border-color: #0f766e; }
-.section-badge.interlude { color: #4338ca; background: #eef2ff; border-color: #4338ca; }
-.section-badge.solo     { color: #b45309; background: #fffbeb; border-color: #b45309; }
+.block-marker .marker-label {
+  color: inherit;
+}
+.block-marker.intro      { color: #6b21a8; background: #f5f3ff; }
+.block-marker.intro      .marker-glyph { background: #6b21a8; color: #ffffff; }
+.block-marker.verse      { color: #1d4ed8; background: #eff6ff; }
+.block-marker.verse      .marker-glyph { background: #1d4ed8; color: #ffffff; }
+.block-marker.chorus     { color: #c2410c; background: #fff7ed; }
+.block-marker.chorus     .marker-glyph { background: #c2410c; color: #ffffff; }
+.block-marker.bridge     { color: #be185d; background: #fdf2f8; }
+.block-marker.bridge     .marker-glyph { background: #be185d; color: #ffffff; }
+.block-marker.outro      { color: #4b5563; background: #f3f4f6; }
+.block-marker.outro      .marker-glyph { background: #4b5563; color: #ffffff; }
+.block-marker.pre_chorus { color: #0f766e; background: #f0fdfa; }
+.block-marker.pre_chorus .marker-glyph { background: #0f766e; color: #ffffff; }
+.block-marker.interlude  { color: #4338ca; background: #eef2ff; }
+.block-marker.interlude  .marker-glyph { background: #4338ca; color: #ffffff; }
+.block-marker.solo       { color: #b45309; background: #fffbeb; }
+.block-marker.solo       .marker-glyph { background: #b45309; color: #ffffff; }
+
+/* Legacy full-width badge — hidden (replaced by inline marker). */
+.section-badge,
+.block-repeat { display: none !important; }
+
+/* Legacy left-bar by type — REMOVED (border-left: 0 on .block above). */
 
 .line {
   display: flex;
@@ -146,17 +167,19 @@ h1.song-title {
   {% set badge_type = block.type or 'verse' %}
   {% set glyph = glyph_map.get(badge_type, 'V') %}
   {% set block_label = block.name %}
-  {% if ns.counts.get(sig, 0) > 1 %}
-    {% set block_label = block_label ~ ' (×' ~ ns.counts.get(sig, 0) ~ ')' %}
+  {% set repeat_n = ns.counts.get(sig, 0) %}
+  {% if repeat_n > 1 %}
+    {% set block_label = block_label ~ ' (×' ~ repeat_n ~ ')' %}
   {% endif %}
 
   <div class="block block-{{ block.type }}">
-    <div class="section-badge {{ badge_type }}">
-      <span class="glyph">{{ glyph }}</span>
-      <span>{{ block_label }}</span>
-      {% if ns.counts.get(sig, 0) > 1 %}
-        <span class="block-repeat">se repite</span>
-      {% endif %}
+    {# Marker row: small glyph + label, rendered as a compact inline
+       pill on its own tight row — NOT as a full-width badge that
+       inflates the block. Below it, the first line's chord-row sits
+       right under the marker. #}
+    <div class="block-marker {{ badge_type }}">
+      <span class="marker-glyph">{{ glyph }}</span>
+      <span class="marker-label">{{ block_label }}</span>
     </div>
     {% for line in block.lines %}
       <div class="line{% if line.text and line.text.startswith('  ') %} indent{% endif %}">

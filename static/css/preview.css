@@ -80,42 +80,59 @@ body {
 .preview-block + .preview-block {
   margin-top: 0;
 }
-.preview-section-badge {
+
+/* Inline marker — glyph + label rendered at the start of the FIRST
+   chord row of the block. Sits as a single inline pill, not a whole row. */
+.preview-marker-inline {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: 'Helvetica', 'Arial', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 5px 12px;
-  border-radius: 6px;
-  margin: 0 0 8px 0;
-  border-left: 4px solid currentColor;
-  width: auto;
+  letter-spacing: 0.6px;
+  padding: 2px 8px 2px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tag-color, #fbbf24);
+  white-space: nowrap;
 }
-.preview-section-badge .badge-glyph {
-  font-size: 15px;
-  font-weight: 800;
-  filter: brightness(1.15);
-}
-.preview-section-badge .badge-repeat {
+.preview-marker-inline .preview-marker-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 4px;
   font-size: 10px;
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-  opacity: 0.75;
-  margin-left: 4px;
+  font-weight: 800;
+  border-radius: 3px;
+  background: var(--tag-color, #fbbf24);
+  color: #0e0e10;
 }
-.preview-section-badge.intro      { color: #a78bfa; background: rgba(167, 139, 250, 0.10); border-color: #a78bfa; }
-.preview-section-badge.verse      { color: #60a5fa; background: rgba(96, 165, 250, 0.10); border-color: #60a5fa; }
-.preview-section-badge.chorus     { color: #fb923c; background: rgba(251, 146, 60, 0.12); border-color: #fb923c; }
-.preview-section-badge.bridge     { color: #f472b6; background: rgba(244, 114, 182, 0.10); border-color: #f472b6; }
-.preview-section-badge.outro      { color: #94a3b8; background: rgba(148, 163, 184, 0.10); border-color: #94a3b8; }
-.preview-section-badge.pre_chorus { color: #5eead4; background: rgba(94, 234, 212, 0.10); border-color: #5eead4; }
-.preview-section-badge.interlude  { color: #818cf8; background: rgba(129, 140, 248, 0.10); border-color: #818cf8; }
-.preview-section-badge.solo       { color: #fcd34d; background: rgba(252, 211, 77, 0.10); border-color: #fcd34d; }
+.preview-marker-inline.intro      { --tag-color: #a78bfa; }
+.preview-marker-inline.verse      { --tag-color: #60a5fa; }
+.preview-marker-inline.chorus     { --tag-color: #fb923c; }
+.preview-marker-inline.bridge     { --tag-color: #f472b6; }
+.preview-marker-inline.outro      { --tag-color: #94a3b8; }
+.preview-marker-inline.pre_chorus { --tag-color: #5eead4; }
+.preview-marker-inline.interlude  { --tag-color: #818cf8; }
+.preview-marker-inline.solo       { --tag-color: #fcd34d; }
+
+/* First-chord-row sits flush with the marker (no extra top margin). */
+.preview-chord-row-first {
+  margin-bottom: 0;
+  min-height: 0;
+}
+.preview-chord-row-first .preview-marker-inline {
+  /* Slight breathing room above the rest of the block */
+  margin-bottom: 4px;
+}
+
+/* Legacy badge — hidden (replaced by inline marker). */
+.preview-section-badge { display: none !important; }
+.preview-section-name  { display: none !important; }
 
 .preview-line {
   margin-bottom: 8px;
@@ -139,11 +156,22 @@ body {
   line-height: 1.4;
 }
 
+/* Legacy left-border per block — REMOVED. Manuel wanted the marker
+   inline only, not a full row that visually inflates each block. */
+.preview-block[data-type="verse"]    { border-left: 0; }
+.preview-block[data-type="chorus"]   { border-left: 0; }
+.preview-block[data-type="intro"]    { border-left: 0; }
+.preview-block[data-type="bridge"]   { border-left: 0; }
+.preview-block[data-type="outro"]    { border-left: 0; }
+.preview-block[data-type="pre_chorus"] { border-left: 0; }
+.preview-block[data-type="interlude"]  { border-left: 0; }
+.preview-block[data-type="solo"]       { border-left: 0; }
+
 @media (max-width: 600px) {
   body { font-size: 16px; }
   .preview-header h1 { font-size: 22px; }
   .preview-content { padding: 0 12px; }
   .preview-block { margin-bottom: 12px; }
-  .preview-section-badge { font-size: 11px; padding: 4px 10px; }
+  .preview-marker-inline { font-size: 10px; padding: 2px 7px 2px 3px; }
   .preview-line { margin-bottom: 6px; }
 }

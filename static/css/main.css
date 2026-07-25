@@ -217,17 +217,41 @@ main { padding-bottom: 80px; }
   border: 1px solid var(--border);
   border-radius: 10px;
   margin-bottom: 12px;
+  padding: 4px 0 8px;
   overflow: hidden;
 }
-.block-header {
+
+/* ---------- Inline section marker ----------
+   Sits at the start of the first content row — NOT on its own line.
+   Just a small glyph + abbreviated label, separated from lyrics by
+   enough horizontal space to be readable but not intrusive. */
+.block-marker-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--panel-2);
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
+  padding: 6px 14px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
-.block-name {
+.block-marker-row .block-marker-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 4px;
+  color: #0b0f19;
+}
+.block-marker-row .block-marker-label {
+  font-size: 10px;
+  opacity: 0.85;
+}
+.block-marker-row .block-marker-name {
   flex: 1;
   background: transparent;
   border: 0;
@@ -237,18 +261,42 @@ main { padding-bottom: 80px; }
   text-transform: uppercase;
   letter-spacing: 1px;
   outline: none;
+  font-family: inherit;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
 }
-.block-name:focus { color: var(--accent); }
-.block-type-tag {
-  font-size: 9px;
-  color: var(--text-dim);
+.block-marker-row .block-marker-name:focus { color: var(--accent); }
+.block-marker-row .block-repeat-pill {
+  font-size: 10px;
   background: var(--border);
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: lowercase;
+  color: var(--text-dim);
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-left: 4px;
 }
-.block-controls { display: flex; gap: 2px; }
-.block-controls button {
+
+/* Per-type marker colors. Each marker-row picks its glyph color
+   from --marker-color. The glyph itself uses a darker fill for contrast. */
+.block-marker-row.tverse    { --marker-color: #60a5fa; }
+.block-marker-row.tchorus   { --marker-color: #fb923c; }
+.block-marker-row.tintro    { --marker-color: #a78bfa; }
+.block-marker-row.tbridge   { --marker-color: #f472b6; }
+.block-marker-row.toutro    { --marker-color: #94a3b8; }
+.block-marker-row.tpre_chorus { --marker-color: #5eead4; }
+.block-marker-row.tinterlude { --marker-color: #818cf8; }
+.block-marker-row.tsolo     { --marker-color: #fcd34d; }
+
+.block-marker-row { color: var(--marker-color, var(--text-dim)); }
+.block-marker-row .block-marker-glyph {
+  background: var(--marker-color, var(--accent));
+}
+
+/* controls hidden until hover (same as before) */
+.block-marker-row .block-controls { display: none; gap: 2px; }
+.block:hover .block-marker-row .block-controls { display: flex; }
+.block-marker-row .block-controls button {
   background: transparent;
   border: 0;
   color: var(--text-dim);
@@ -256,12 +304,25 @@ main { padding-bottom: 80px; }
   font-size: 14px;
   border-radius: 4px;
 }
-.block-controls button:hover { background: var(--border); color: var(--text); }
-.block-controls button.danger:hover { background: var(--danger); color: white; }
+.block-marker-row .block-controls button:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.block-marker-row .block-controls button.danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.block-name {
+  /* legacy class — still in DOM via editor.js leftovers; harmless */
+  display: none;
+}
+.block-type-tag { display: none; }
+.block-repeat-pill { display: none; }
 
 /* ---------- Lines ---------- */
 .lines-container {
-  padding: 12px 14px;
+  padding: 4px 14px 8px;
 }
 .line {
   position: relative;
@@ -1004,22 +1065,18 @@ main { padding-bottom: 80px; }
 .block-type-tag.tinterlude { color: #818cf8; background: rgba(129,140,248,0.10); }
 .block-type-tag.tsolo     { color: #fcd34d; background: rgba(252,211,77,0.10); }
 
-/* Left accent border per block type — works in editor + preview */
-.block[data-type="verse"]    { border-left: 3px solid #60a5fa; }
-.block[data-type="chorus"]   { border-left: 3px solid #fb923c; }
-.block[data-type="intro"]    { border-left: 3px solid #a78bfa; }
-.block[data-type="bridge"]   { border-left: 3px solid #f472b6; }
-.block[data-type="outro"]    { border-left: 3px solid #94a3b8; }
-.block[data-type="pre_chorus"] { border-left: 3px solid #5eead4; }
-.block[data-type="interlude"] { border-left: 3px solid #818cf8; }
-.block[data-type="solo"]     { border-left: 3px solid #fcd34d; }
+/* Legacy section color tokens — kept for preview.css compatibility.
+   The editor no longer renders a full-width left border on every block
+   because Manuel said it occupied too much space. The marker glyph
+   alone conveys the section type. */
+.block[data-type="verse"]    { --tag-color: #60a5fa; }
+.block[data-type="chorus"]   { --tag-color: #fb923c; }
+.block[data-type="intro"]    { --tag-color: #a78bfa; }
+.block[data-type="bridge"]   { --tag-color: #f472b6; }
+.block[data-type="outro"]    { --tag-color: #94a3b8; }
+.block[data-type="pre_chorus"] { --tag-color: #5eead4; }
+.block[data-type="interlude"] { --tag-color: #818cf8; }
+.block[data-type="solo"]     { --tag-color: #fcd34d; }
 
-/* Repeat indicator */
-.block-repeat-pill {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-dim);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.06);
-}
+/* No full-height left border on the block — Manuel: "debe ser un indicador
+   al inicio de la línea, no debe ser una línea completa". */
