@@ -40,20 +40,12 @@
       {% for c in (line.chords or []) %}
         {% set _ = chord_map.update({c.position: c.symbol}) %}
       {% endfor %}
-      {% set max_pos = (line.chords|map(attribute='position')|max) if line.chords else 0 %}
-      {% set chord_line_chars = namespace(out='') %}
-      {% if line.text %}
-        {% set width = [max_pos + line.text|length + 2, 80]|max %}
-        {% for i in range(width) %}
-          {% if i in chord_map %}
-            {% set chord_line_chars.out = chord_line_chars.out + chord_map[i] %}
-          {% elif i < line.text|length %}
-            {% set chord_line_chars.out = chord_line_chars.out + ' ' %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
       <div class="preview-line">
-        <div class="preview-chord-row">{{ chord_line_chars.out }}</div>
+        <div class="preview-chord-row">
+          {% for c in (line.chords or []) %}
+            <span class="preview-chord-pin" data-position="{{ c.position }}">{{ c.symbol }}</span>
+          {% endfor %}
+        </div>
         <div class="preview-text-row">{{ line.text }}</div>
       </div>
     {% endfor %}
@@ -93,6 +85,57 @@ function toggleAutoScroll() {
 // ----- Header collapse / hide controls --------------------------------------
 const HEADER  = document.querySelector('.preview-header');
 const TOG_BTN = document.getElementById('toggle-header-btn');
+
+// ----- Chord alignment ------------------------------------------------------
+// The chord-row is rendered with absolute-positioned pins (data-position =
+// character index in the text). We measure the text-row to find each char's
+// pixel offset and pin each chord above its target character.
+//
+// This is needed because the chord-row uses monospace (chords look techy) but
+// the text-row uses Georgia serif (lyrics read well) — character widths
+// don't match, so naive padding-with-spaces won't align the chord on the
+// correct syllable.
+function alignChords() {
+  const lines = document.querySelectorAll('.preview-line');
+  for (const ln of lines) {
+    const chordRow = ln.querySelector('.preview-chord-row');
+    const textRow  = ln.querySelector('.preview-text-row');
+    if (!chordRow || !textRow) continue;
+    const pins = chordRow.querySelectorAll('.preview-chord-pin');
+    if (!pins.length) continue;
+    // Build a measurement clone: each char in its own inline span so we can
+    // read each char's left offset relative to textRow.
+    const text = textRow.textContent;
+    const frag = document.createDocumentFragment();
+    const charEls = [];
+    for (const ch of text) {
+      const s = document.createElement('span');
+      s.textContent = (ch === ' ') ? '\u00A0' : ch; // preserve trailing spaces
+      s.style.display = 'inline';
+      frag.appendChild(s);
+      charEls.push(s);
+    }
+    // Mount off-screen to measure
+    const measurer = document.createElement('div');
+    measurer.style.cssText = `
+      position: absolute; visibility: hidden; left: 0; top: 0;
+      white-space: pre-wrap; width: ${textRow.offsetWidth}px;
+      font: ${getComputedStyle(textRow).font};
+      letter-spacing: ${getComputedStyle(textRow).letterSpacing};
+    `;
+    measurer.appendChild(frag);
+    document.body.appendChild(measurer);
+    const offsets = charEls.map(s => s.offsetLeft);
+    document.body.removeChild(measurer);
+    // Position each pin at offsets[position]
+    for (const pin of pins) {
+      const pos = parseInt(pin.dataset.position, 10);
+      const safe = Math.min(pos, offsets.length - 1);
+      pin.style.left = offsets[safe] + 'px';
+    }
+  }
+}
+
 // Three states: 'full' (title + meta) → 'compact' (title only) → 'hidden' (off).
 let headerMode = localStorage.getItem('preview.headerMode') || 'full';
 applyHeaderMode();
@@ -143,6 +186,13 @@ window.addEventListener('scroll', () => {
   }
   lastY = y;
 }, { passive: true });
+
+// Run chord alignment now and on every resize / font load.
+alignChords();
+window.addEventListener('resize', alignChords);
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(alignChords);
+}
 </script>
 </body>
 </html>

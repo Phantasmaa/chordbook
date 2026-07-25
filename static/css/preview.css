@@ -186,21 +186,40 @@ body {
   font-family: 'Georgia', 'Times New Roman', serif;
 }
 .preview-line .preview-chord-row {
+  position: relative;
   color: #fbbf24;
   font-weight: 700;
-  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 15px;
-  min-height: 1.3em;
-  white-space: pre;
-  letter-spacing: 0.02em;
-  margin-bottom: 2px;
+  /* font-size:0 so the row has no intrinsic height — pins are absolute
+     and bring their own font-size. Without this, white-space:pre with no
+     text content leaves a phantom empty line ~22px tall. */
+  font-size: 0;
   line-height: 1.2;
+  /* Reserve ~17px for the pin (chord font-size is 14px, plus line-height). */
+  height: 17px;
+  margin-bottom: 2px;
+  white-space: pre;
+}
+/* Each chord is absolutely positioned at the character index from the
+   parser. Width is set via JS after layout so it tracks the actual
+   rendered width of one character in the text-row below. */
+.preview-chord-pin {
+  position: absolute;
+  top: 0;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 14px;
+  color: #fbbf24;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .preview-line .preview-text-row {
   color: #eaeaea;
   font-size: 17px;
+  font-family: 'Georgia', 'Times New Roman', serif;
   white-space: pre-wrap;
   line-height: 1.4;
+  /* Establish a containing block for any future absolute children */
+  position: relative;
 }
 
 /* Legacy left-border per block — REMOVED. Manuel wanted the marker
