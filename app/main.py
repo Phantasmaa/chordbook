@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sqlite3
+from typing import Dict, List, Tuple
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -284,8 +285,27 @@ def import_lacuerda():
     # Group consecutive blocks of identical type as the same section
     # (LaCuerda repeats verses since it doesn't label each part).
     section_counters = {"VERSO": 1, "CORO": 1, "PUENTE": 1}
+    seen_signatures: Dict[Tuple, int] = {}
+
+    def block_signature(raw_block: Dict) -> Tuple:
+        """Signature for detecting repeated blocks (acts as CORO heuristic).
+        We ignore the chord positions because transcribers often differ slightly
+        on chord placement between repetitions; only the lyric matters."""
+        return tuple(
+            (ln["text"] or "").strip() for ln in raw_block.get("lines", [])
+        )
+
+    # First pass: classify blocks. Repeated text -> CORO; first occurrence -> VERSO.
+    classified: List[Tuple[str, Dict]] = []
     for raw in parsed["blocks"]:
-        base = raw["name"]
+        sig = block_signature(raw)
+        if sig in seen_signatures and len(sig) > 0:
+            classified.append(("CORO", raw))
+        else:
+            seen_signatures[sig] = len(classified)
+            classified.append(("VERSO", raw))  # default to VERSO on first sight
+
+    for base_name, raw in classified:
         lines = [
             {
                 "text": ln["text"],
@@ -296,22 +316,22 @@ def import_lacuerda():
             }
             for ln in raw["lines"]
         ]
-        n = section_counters.get(base, None)
-        name = f"{base} {n}" if n else base
+        n = section_counters.get(base_name, None)
+        name = f"{base_name} {n}" if n else base_name
         if n:
-            section_counters[base] = n + 1
+            section_counters[base_name] = n + 1
         type_map = {
             "INTRO": "intro",
             "VERSO": "verse",
             "CORO": "chorus",
             "PUENTE": "bridge",
             "OUTRO": "outro",
-            "PRE-CORO": "pre_chorus",
+            "PRE-CORO": "pre-chorus",
             "INTERLUDIO": "interlude",
             "SOLO": "solo",
         }
         blocks.append({
-            "type": type_map.get(base, "verse"),
+            "type": type_map.get(base_name, "verse"),
             "name": name,
             "lines": lines,
         })

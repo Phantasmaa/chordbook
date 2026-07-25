@@ -6,51 +6,89 @@
 <style>
 @page {
   size: A4;
-  margin: 15mm 12mm;
+  margin: 14mm 12mm;
 }
 * { box-sizing: border-box; }
 body {
   font-family: 'Charter', 'Georgia', serif;
   font-size: 11pt;
-  line-height: 1.45;
+  line-height: 1.35;
   color: #111;
   margin: 0;
 }
 h1.song-title {
   font-size: 22pt;
   font-weight: 700;
-  margin: 0 0 4pt 0;
+  margin: 0 0 3pt 0;
   text-align: center;
 }
 .song-meta {
   text-align: center;
   font-size: 9pt;
   color: #555;
-  margin-bottom: 18pt;
+  margin-bottom: 12pt;
   border-bottom: 1px solid #999;
-  padding-bottom: 6pt;
+  padding-bottom: 4pt;
 }
-.section-name {
-  font-size: 10pt;
+.block {
+  /* Tighter spacing between blocks */
+  margin: 0;
+  padding: 0;
+  page-break-inside: auto;
+}
+.block + .block {
+  margin-top: 10pt;
+}
+.block-repeat {
+  font-size: 8pt;
+  color: #666;
+  font-weight: 400;
+  margin-left: 4pt;
+}
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4pt;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  font-size: 9pt;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1pt;
-  color: #444;
-  margin: 16pt 0 6pt;
+  letter-spacing: 0.5pt;
+  padding: 3pt 8pt;
+  border-radius: 4pt;
+  margin: 0 0 4pt 0;
+  border-left: 4pt solid currentColor;
 }
+.section-badge .glyph {
+  font-size: 11pt;
+  margin-right: 2pt;
+  filter: brightness(1.1);
+}
+.section-badge.intro    { color: #6b21a8; background: #f5f3ff; border-color: #6b21a8; }
+.section-badge.verse    { color: #1d4ed8; background: #eff6ff; border-color: #1d4ed8; }
+.section-badge.chorus   { color: #c2410c; background: #fff7ed; border-color: #c2410c; }
+.section-badge.bridge   { color: #be185d; background: #fdf2f8; border-color: #be185d; }
+.section-badge.outro    { color: #4b5563; background: #f3f4f6; border-color: #4b5563; }
+.section-badge.pre_chorus { color: #0f766e; background: #f0fdfa; border-color: #0f766e; }
+.section-badge.interlude { color: #4338ca; background: #eef2ff; border-color: #4338ca; }
+.section-badge.solo     { color: #b45309; background: #fffbeb; border-color: #b45309; }
+
 .line {
   display: flex;
   flex-direction: column;
-  margin-bottom: 4pt;
+  margin-bottom: 2pt;
   page-break-inside: avoid;
+}
+.line.indent {
+  padding-left: 18pt;
 }
 .chord-line {
   font-family: 'Menlo', 'Consolas', monospace;
   font-size: 9pt;
   font-weight: 700;
-  color: #c2410c;   /* burnt orange like a real chord chart */
+  color: #c2410c;
   white-space: pre;
-  min-height: 11pt;
+  min-height: 10pt;
   letter-spacing: 0;
   line-height: 1.1;
 }
@@ -58,7 +96,7 @@ h1.song-title {
   font-family: 'Charter', 'Georgia', serif;
   font-size: 11pt;
   white-space: pre-wrap;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 .capo-note {
   text-align: center;
@@ -69,6 +107,7 @@ h1.song-title {
 @media print {
   body { font-size: 11pt; }
   .line { page-break-inside: avoid; }
+  .block { page-break-inside: auto; }
 }
 </style>
 </head>
@@ -86,14 +125,46 @@ h1.song-title {
 </div>
 {% endif %}
 
+{# Glyphs per block type #}
+{% set glyph_map = {
+  'intro':      '▶',
+  'verse':      'V',
+  'chorus':     'C',
+  'bridge':     'P',
+  'outro':      '■',
+  'pre_chorus': 'PC',
+  'interlude':  'I',
+  'solo':       'S',
+} %}
+{# Track how many times each section name appears in this song #}
+{% set ns = namespace(counts={}) %}
+
 {% for block in song.content.blocks %}
-<div class="section-name">{{ block.name }}</div>
-{% for line in block.lines %}
-<div class="line">
-  <div class="chord-line">{{ _chord_alignment(line.chords, line.text) }}</div>
-  <div class="text-line">{{ line.text }}</div>
-</div>
-{% endfor %}
+  {# Normalize the block for repeat detection: type + first non-empty line text #}
+  {% set sig = block.type ~ '|' ~ (block.lines[0].text if block.lines and block.lines[0].text else '') %}
+  {% if ns.counts.update({sig: ns.counts.get(sig, 0) + 1}) %}{% endif %}
+  {% set badge_type = block.type or 'verse' %}
+  {% set glyph = glyph_map.get(badge_type, 'V') %}
+  {% set block_label = block.name %}
+  {% if ns.counts.get(sig, 0) > 1 %}
+    {% set block_label = block_label ~ ' (×' ~ ns.counts.get(sig, 0) ~ ')' %}
+  {% endif %}
+
+  <div class="block block-{{ block.type }}">
+    <div class="section-badge {{ badge_type }}">
+      <span class="glyph">{{ glyph }}</span>
+      <span>{{ block_label }}</span>
+      {% if ns.counts.get(sig, 0) > 1 %}
+        <span class="block-repeat">se repite</span>
+      {% endif %}
+    </div>
+    {% for line in block.lines %}
+      <div class="line{% if line.text and line.text.startswith('  ') %} indent{% endif %}">
+        <div class="chord-line">{{ _chord_alignment(line.chords, line.text) }}</div>
+        <div class="text-line">{{ line.text }}</div>
+      </div>
+    {% endfor %}
+  </div>
 {% endfor %}
 
 </body>

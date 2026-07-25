@@ -35,9 +35,24 @@ function renderBlock(block, bi) {
   // Header
   const header = document.createElement('div');
   header.className = 'block-header';
+  // Count how many blocks of this same type+signature exist so far
+  // (cheap repeat detection on the client; matches backend heuristic).
+  const sig = (block.type || 'verse') + '|' +
+    ((block.lines || [])[0]?.text || '');
+  let occur = 0;
+  for (let i = 0; i <= bi; i++) {
+    const b2 = SONG.content.blocks[i];
+    if (!b2) continue;
+    const sig2 = (b2.type || 'verse') + '|' + ((b2.lines || [])[0]?.text || '');
+    if (sig2 === sig) occur++;
+  }
+  const typeLabel = SECTION_LABELS[block.type] || block.type || 'Verso';
+  const typeClass = 't' + (block.type || 'verse').replace('-', '_');
+  const repeatPill = occur > 1 ? `<span class="block-repeat-pill">×${occur}</span>` : '';
   header.innerHTML = `
     <input type="text" class="block-name" value="${escapeHtml(block.name || '')}" data-block-idx="${bi}">
-    <span class="block-type-tag">${SECTION_LABELS[block.type] || block.type}</span>
+    <span class="block-type-tag ${typeClass}">${typeLabel}</span>
+    ${repeatPill}
     <div class="block-controls">
       <button title="Mover arriba" data-action="up" data-block-idx="${bi}">↑</button>
       <button title="Mover abajo" data-action="down" data-block-idx="${bi}">↓</button>

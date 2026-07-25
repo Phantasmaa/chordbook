@@ -964,3 +964,62 @@ main { padding-bottom: 80px; }
 }
 .btn-primary:hover { background: #6d28d9; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
+/* ---------- Block type badges (editor + preview) ---------- */
+.block-type-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border-left: 3px solid currentColor;
+  background: rgba(255,255,255,0.04);
+}
+/* Per-type color tokens */
+.block-type-tag.tverse,
+.block[data-type="verse"]    { --tag-color: #60a5fa; }
+.block-type-tag.tchorus,
+.block[data-type="chorus"]   { --tag-color: #fb923c; }
+.block-type-tag.tintro,
+.block[data-type="intro"]    { --tag-color: #a78bfa; }
+.block-type-tag.tbridge,
+.block[data-type="bridge"]   { --tag-color: #f472b6; }
+.block-type-tag.toutro,
+.block[data-type="outro"]    { --tag-color: #94a3b8; }
+.block-type-tag.tpre_chorus,
+.block[data-type="pre_chorus"] { --tag-color: #5eead4; }
+.block-type-tag.tinterlude,
+.block[data-type="interlude"] { --tag-color: #818cf8; }
+.block-type-tag.tsolo,
+.block[data-type="solo"]     { --tag-color: #fcd34d; }
+
+.block-type-tag.tverse    { color: #60a5fa; background: rgba(96,165,250,0.10); }
+.block-type-tag.tchorus   { color: #fb923c; background: rgba(251,146,60,0.12); }
+.block-type-tag.tintro    { color: #a78bfa; background: rgba(167,139,250,0.10); }
+.block-type-tag.tbridge   { color: #f472b6; background: rgba(244,114,182,0.10); }
+.block-type-tag.toutro    { color: #94a3b8; background: rgba(148,163,184,0.10); }
+.block-type-tag.tpre_chorus { color: #5eead4; background: rgba(94,234,212,0.10); }
+.block-type-tag.tinterlude { color: #818cf8; background: rgba(129,140,248,0.10); }
+.block-type-tag.tsolo     { color: #fcd34d; background: rgba(252,211,77,0.10); }
+
+/* Left accent border per block type — works in editor + preview */
+.block[data-type="verse"]    { border-left: 3px solid #60a5fa; }
+.block[data-type="chorus"]   { border-left: 3px solid #fb923c; }
+.block[data-type="intro"]    { border-left: 3px solid #a78bfa; }
+.block[data-type="bridge"]   { border-left: 3px solid #f472b6; }
+.block[data-type="outro"]    { border-left: 3px solid #94a3b8; }
+.block[data-type="pre_chorus"] { border-left: 3px solid #5eead4; }
+.block[data-type="interlude"] { border-left: 3px solid #818cf8; }
+.block[data-type="solo"]     { border-left: 3px solid #fcd34d; }
+
+/* Repeat indicator */
+.block-repeat-pill {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+}

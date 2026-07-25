@@ -12,14 +12,8 @@ body {
 
 .preview-mode { padding-bottom: 80px; }
 
-.preview-wrap {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
-}
-
 .preview-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #27272a;
 }
@@ -28,7 +22,6 @@ body {
   font-weight: 700;
   margin: 0 0 4px;
 }
-.preview-header .meta,
 .preview-meta {
   color: #9ca3af;
   font-size: 14px;
@@ -37,7 +30,6 @@ body {
   flex-wrap: wrap;
   margin-top: 8px;
 }
-.preview-header .meta strong,
 .preview-meta strong { color: #eaeaea; }
 .key-badge {
   background: rgba(124, 58, 237, 0.15);
@@ -46,7 +38,6 @@ body {
   border-radius: 4px;
   font-weight: 600;
 }
-.preview-actions,
 .preview-controls {
   position: sticky;
   top: 12px;
@@ -60,7 +51,6 @@ body {
   backdrop-filter: blur(8px);
   align-items: center;
 }
-.preview-actions a, .preview-actions button,
 .preview-controls button {
   background: #27272a;
   color: #eaeaea;
@@ -69,14 +59,11 @@ body {
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
-  text-decoration: none;
 }
-.preview-actions a.primary, .preview-actions button.primary,
 .preview-controls button.primary {
   background: #7c3aed;
   color: white;
 }
-.preview-actions a:hover, .preview-actions button:hover,
 .preview-controls button:hover { opacity: 0.85; }
 .preview-controls .separator { color: #4b5563; padding: 0 4px; }
 
@@ -87,20 +74,51 @@ body {
 }
 
 .preview-block {
-  margin-bottom: 32px;
+  margin-bottom: 14px;
+  padding: 0;
 }
-.preview-block .preview-section-name {
+.preview-block + .preview-block {
+  margin-top: 0;
+}
+.preview-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Helvetica', 'Arial', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #7c3aed;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin: 0 0 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #27272a;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  margin: 0 0 8px 0;
+  border-left: 4px solid currentColor;
+  width: auto;
 }
+.preview-section-badge .badge-glyph {
+  font-size: 15px;
+  font-weight: 800;
+  filter: brightness(1.15);
+}
+.preview-section-badge .badge-repeat {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.75;
+  margin-left: 4px;
+}
+.preview-section-badge.intro      { color: #a78bfa; background: rgba(167, 139, 250, 0.10); border-color: #a78bfa; }
+.preview-section-badge.verse      { color: #60a5fa; background: rgba(96, 165, 250, 0.10); border-color: #60a5fa; }
+.preview-section-badge.chorus     { color: #fb923c; background: rgba(251, 146, 60, 0.12); border-color: #fb923c; }
+.preview-section-badge.bridge     { color: #f472b6; background: rgba(244, 114, 182, 0.10); border-color: #f472b6; }
+.preview-section-badge.outro      { color: #94a3b8; background: rgba(148, 163, 184, 0.10); border-color: #94a3b8; }
+.preview-section-badge.pre_chorus { color: #5eead4; background: rgba(94, 234, 212, 0.10); border-color: #5eead4; }
+.preview-section-badge.interlude  { color: #818cf8; background: rgba(129, 140, 248, 0.10); border-color: #818cf8; }
+.preview-section-badge.solo       { color: #fcd34d; background: rgba(252, 211, 77, 0.10); border-color: #fcd34d; }
+
 .preview-line {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   font-family: 'Georgia', 'Times New Roman', serif;
 }
 .preview-line .preview-chord-row {
@@ -116,34 +134,16 @@ body {
 }
 .preview-line .preview-text-row {
   color: #eaeaea;
+  font-size: 17px;
   white-space: pre-wrap;
-  font-size: 18px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-.transpose-controls {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  background: #18181b;
-  border-radius: 8px;
-  padding: 4px;
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .preview-header h1 { font-size: 22px; }
+  .preview-content { padding: 0 12px; }
+  .preview-block { margin-bottom: 12px; }
+  .preview-section-badge { font-size: 11px; padding: 4px 10px; }
+  .preview-line { margin-bottom: 6px; }
 }
-.transpose-controls button {
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  color: #eaeaea;
-  border: none;
-  border-radius: 4px;
-  font-size: 18px;
-  cursor: pointer;
-}
-.transpose-controls button:hover { background: #27272a; }
-.transpose-controls span {
-  min-width: 32px;
-  text-align: center;
-  font-weight: 600;
-  font-size: 14px;
-}
-

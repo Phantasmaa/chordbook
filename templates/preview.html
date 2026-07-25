@@ -28,33 +28,61 @@
 </header>
 
 <main class="preview-content">
-  {% for block in song.content.blocks %}
+{# Glyph per block type #}
+{% set glyph_map = {
+  'intro':      '▶',
+  'verse':      'V',
+  'chorus':     'C',
+  'bridge':     'P',
+  'outro':      '■',
+  'pre_chorus': 'PC',
+  'interlude':  'I',
+  'solo':       'S',
+} %}
+{% set ns = namespace(counts={}) %}
+{% for block in song.content.blocks %}
+  {% set sig = block.type ~ '|' ~ (block.lines[0].text if block.lines and block.lines[0].text else '') %}
+  {% if ns.counts.update({sig: ns.counts.get(sig, 0) + 1}) %}{% endif %}
+  {% set badge_type = block.type or 'verse' %}
+  {% set glyph = glyph_map.get(badge_type, 'V') %}
+  {% set repeat_n = ns.counts.get(sig, 0) %}
+  {% set block_label = block.name %}
+  {% if repeat_n > 1 %}
+    {% set block_label = block_label ~ ' ×' ~ repeat_n %}
+  {% endif %}
+
   <section class="preview-block" data-type="{{ block.type }}">
-    <h2 class="preview-section-name">{{ block.name }}</h2>
-    {% for line in block.lines %}
-    {% set chord_map = {} %}
-    {% for c in (line.chords or []) %}
-      {% set _ = chord_map.update({c.position: c.symbol}) %}
-    {% endfor %}
-    {% set max_pos = (line.chords|map(attribute='position')|max) if line.chords else 0 %}
-    {% set chord_line_chars = namespace(out='') %}
-    {% if line.text %}
-      {% set width = [max_pos + line.text|length + 2, 80]|max %}
-      {% for i in range(width) %}
-        {% if i in chord_map %}
-          {% set chord_line_chars.out = chord_line_chars.out + chord_map[i] %}
-        {% elif i < line.text|length %}
-          {% set chord_line_chars.out = chord_line_chars.out + ' ' %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-    <div class="preview-line">
-      <div class="preview-chord-row">{{ chord_line_chars.out }}</div>
-      <div class="preview-text-row">{{ line.text }}</div>
+    <div class="preview-section-badge {{ badge_type }}">
+      <span class="badge-glyph">{{ glyph }}</span>
+      <span class="badge-label">{{ block_label }}</span>
+      {% if repeat_n > 1 %}
+        <span class="badge-repeat">se repite</span>
+      {% endif %}
     </div>
+    {% for line in block.lines %}
+      {% set chord_map = {} %}
+      {% for c in (line.chords or []) %}
+        {% set _ = chord_map.update({c.position: c.symbol}) %}
+      {% endfor %}
+      {% set max_pos = (line.chords|map(attribute='position')|max) if line.chords else 0 %}
+      {% set chord_line_chars = namespace(out='') %}
+      {% if line.text %}
+        {% set width = [max_pos + line.text|length + 2, 80]|max %}
+        {% for i in range(width) %}
+          {% if i in chord_map %}
+            {% set chord_line_chars.out = chord_line_chars.out + chord_map[i] %}
+          {% elif i < line.text|length %}
+            {% set chord_line_chars.out = chord_line_chars.out + ' ' %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      <div class="preview-line">
+        <div class="preview-chord-row">{{ chord_line_chars.out }}</div>
+        <div class="preview-text-row">{{ line.text }}</div>
+      </div>
     {% endfor %}
   </section>
-  {% endfor %}
+{% endfor %}
 </main>
 
 <script>
