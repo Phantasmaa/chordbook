@@ -22,6 +22,11 @@ from app.chord_engine import (
     parse_chord_line, format_chord_display,
 )
 
+# Lazy import — LaCuerda scraper pulls in `requests`, only loaded on demand
+def _lacuerda_fetch(url):
+    from app.lacuerda import fetch_lacuerda as _f
+    return _f(url)
+
 # ---------- Config ----------
 
 BASE_DIR = Path(__file__).parent.parent
@@ -239,6 +244,161 @@ def setlist_view(setlist_id):
 
 
 # ---------- Routes: API ----------
+
+@app.route("/api/import/lacuerda", methods=["POST"])
+def import_lacuerda():
+    """
+    Body: { "url": "https://acordes.lacuerda.net/gatos/la_balsa.shtml" }
+    Returns: parsed song dict ready to feed into the editor.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "URL requerida"}), 400
+    if "lacuerda.net" not in url.lower():
+        return jsonify({"error": "La URL debe ser de lacuerda.net"}), 400
+
+    try:
+        parsed = _lacuerda_fetch(url)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        # Catch-all so we never 500 on a flaky external site
+        app.logger.exception("LaCuerda import failed")
+        return jsonify({"error": f"No se pudo importar: {type(e).__name__}"}), 502
+
+    # Convert to Chordbook's editor block shape (each line has
+    # `chords` with `symbol` and `position` — column index 0-based).
+    blocks = []
+    if parsed.get("intro_chords"):
+        intro_chords = [
+            {"symbol": c, "position": i * 4}
+            for i, c in enumerate(parsed["intro_chords"])
+        ]
+        blocks.append({
+            "type": "intro",
+            "name": "Intro",
+            "lines": [{"text": "", "chords": intro_chords}],
+        })
+
+    # Group consecutive blocks of identical type as the same section
+    # (LaCuerda repeats verses since it doesn't label each part).
+    section_counters = {"VERSO": 1, "CORO": 1, "PUENTE": 1}
+    for raw in parsed["blocks"]:
+        base = raw["name"]
+        lines = [
+            {
+                "text": ln["text"],
+                "chords": [
+                    {"symbol": c["symbol"], "position": c["pos"]}
+                    for c in ln["chords"]
+                ],
+            }
+            for ln in raw["lines"]
+        ]
+        n = section_counters.get(base, None)
+        name = f"{base} {n}" if n else base
+        if n:
+            section_counters[base] = n + 1
+        type_map = {
+            "INTRO": "intro",
+            "VERSO": "verse",
+            "CORO": "chorus",
+            "PUENTE": "bridge",
+            "OUTRO": "outro",
+            "PRE-CORO": "pre_chorus",
+            "INTERLUDIO": "interlude",
+            "SOLO": "solo",
+        }
+        blocks.append({
+            "type": type_map.get(base, "verse"),
+            "name": name,
+            "lines": lines,
+        })
+
+    title = parsed.get("title") or "Sin título"
+    artist = parsed.get("artist") or ""
+    payload = {
+        "title": title,
+        "artist": artist,
+        "key": "C",
+        "capo": 0,
+        "tempo": 120,
+        "time_signature": "4/4",
+        "tags": ["importado-lacuerda"],
+        "notes": f"Importado de {parsed.get('source_url', url)}",
+        "source_url": parsed.get("source_url", url),
+        "content": {"blocks": blocks},
+    }
+    return jsonify(payload)
+
+
+@app.route("/api/import/lacuerda/save", methods=["POST"])
+def import_lacuerda_save():
+    """
+    Single-shot: scrape LaCuerda + persist to DB + return song id.
+    Body: { "url": "..." }
+    Returns: { id, title, artist, blocks: N }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "URL requerida"}), 400
+    if "lacuerda.net" not in url.lower():
+        return jsonify({"error": "La URL debe ser de lacuerda.net"}), 400
+
+    try:
+        parsed = _lacuerda_fetch(url)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        app.logger.exception("LaCuerda import failed")
+        return jsonify({"error": f"No se pudo importar: {type(e).__name__}"}), 502
+
+    # Reuse the same conversion by calling import_lacuerda and parsing its payload
+    with app.test_request_context(
+        "/api/import/lacuerda",
+        method="POST",
+        json={"url": url},
+    ):
+        try:
+            pseudo_response = import_lacuerda()
+            payload = pseudo_response.get_json()
+        except Exception as e:
+            return jsonify({"error": f"Conversión falló: {e}"}), 500
+
+    # Persist
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO songs (title, artist, album, key, capo, tempo, time_signature,
+                              content, tags, notes, source_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            payload["title"],
+            payload.get("artist", ""),
+            payload.get("album", ""),
+            payload.get("key", "C"),
+            int(payload.get("capo", 0) or 0),
+            int(payload.get("tempo", 120) or 120),
+            payload.get("time_signature", "4/4"),
+            json.dumps(payload["content"]),
+            ",".join(payload.get("tags", [])),
+            payload.get("notes", ""),
+            payload.get("source_url", url),
+        ),
+    )
+    db.commit()
+    song_id = cur.lastrowid
+    db.close()
+    return jsonify(
+        {
+            "id": song_id,
+            "title": payload["title"],
+            "artist": payload.get("artist", ""),
+            "blocks": len(payload["content"]["blocks"]),
+        }
+    ), 201
+
 
 @app.route("/api/songs", methods=["POST"])
 def create_song():

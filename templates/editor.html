@@ -42,6 +42,7 @@
     </select>
   </div>
   <div class="meta-actions">
+    <button class="btn-icon" id="btn-import-lacuerda" title="Importar de LaCuerda.net">📥</button>
     <button class="btn-transpose" data-dir="-1" title="Bajar medio tono">−</button>
     <button class="btn-transpose" data-dir="+1" title="Subir medio tono">+</button>
     <button class="btn-icon" id="btn-preview" title="Vista previa">👁</button>
@@ -113,6 +114,33 @@
 
 <!-- Hidden song data bootstrap -->
 <script id="song-data" type="application/json">{{ song|tojson }}</script>
+
+<!-- LaCuerda.net import modal -->
+<div class="modal-overlay" id="lacuerda-modal" style="display:none">
+  <div class="modal-card paste-modal">
+    <div class="modal-header">
+      <h2>📥 Importar de LaCuerda.net</h2>
+      <button class="modal-close" data-close="lacuerda-modal">×</button>
+    </div>
+    <p class="modal-hint">
+      Pegá el link de la canción en LaCuerda. Ejemplos:<br>
+      <code style="color:#7c8aff">acordes.lacuerda.net/gatos/la_balsa.shtml</code>
+    </p>
+    <div class="lacuerda-url-row">
+      <input
+        type="url"
+        id="lacuerda-url"
+        class="lacuerda-url-input"
+        placeholder="https://acordes.lacuerda.net/…"
+        autocomplete="off"
+        inputmode="url"
+        autofocus
+      >
+      <button class="btn-primary" id="lacuerda-fetch-btn">Importar</button>
+    </div>
+    <div id="lacuerda-status" class="lacuerda-status"></div>
+  </div>
+</div>
 
 {% endblock %}
 

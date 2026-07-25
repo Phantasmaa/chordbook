@@ -925,3 +925,42 @@ main { padding-bottom: 80px; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
+
+
+/* ---------- LaCuerda.net import modal ---------- */
+.lacuerda-url-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+.lacuerda-url-input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #3f3f46;
+  background: #0a0a0c;
+  color: #eaeaea;
+  font-family: monospace;
+  outline: none;
+}
+.lacuerda-url-input:focus { border-color: #7c8aff; }
+
+.lacuerda-status { margin-top: 8px; font-size: 14px; min-height: 22px; }
+.lacuerda-status.loading { color: #c084fc; }
+.lacuerda-status.success { color: #4ade80; }
+.lacuerda-status.error { color: #f87171; }
+
+.btn-primary {
+  background: #7c3aed;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 18px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+}
+.btn-primary:hover { background: #6d28d9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }

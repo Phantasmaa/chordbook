@@ -666,5 +666,94 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
+// ---------- LaCuerda.net import ----------
+
+const $ = (id) => document.getElementById(id);
+
+function openLacuerdaModal() {
+  $('lacuerda-modal').style.display = '';
+  setTimeout(() => $('lacuerda-url').focus(), 50);
+}
+
+function closeLacuerdaModal() {
+  $('lacuerda-modal').style.display = 'none';
+  $('lacuerda-status').textContent = '';
+  $('lacuerda-status').className = 'lacuerda-status';
+}
+
+async function doLacuerdaImport() {
+  const url = ($('lacuerda-url').value || '').trim();
+  const status = $('lacuerda-status');
+  const btn = $('lacuerda-fetch-btn');
+
+  if (!url) {
+    status.textContent = 'Pegá una URL de LaCuerda.net';
+    status.className = 'lacuerda-status error';
+    return;
+  }
+
+  btn.disabled = true;
+  status.textContent = '⏳ Importando de LaCuerda…';
+  status.className = 'lacuerda-status loading';
+
+  try {
+    // Single-shot: scrape + persist + return song id
+    const r = await fetch('/api/import/lacuerda/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      status.textContent = '❌ ' + (j.error || 'No se pudo importar');
+      status.className = 'lacuerda-status error';
+      return;
+    }
+    status.textContent =
+      `✓ Importado: "${j.title}" (${j.artist}). ` +
+      `${j.blocks} bloques. Redirigiendo…`;
+    status.className = 'lacuerda-status success';
+    setTimeout(() => {
+      window.location.href = '/song/' + j.id;
+    }, 800);
+  } catch (e) {
+    status.textContent = '❌ Error de red: ' + e.message;
+    status.className = 'lacuerda-status error';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t.id === 'btn-import-lacuerda') {
+    openLacuerdaModal();
+    return;
+  }
+  if (t.id === 'lacuerda-fetch-btn') {
+    doLacuerdaImport();
+    return;
+  }
+  if (t.dataset && t.dataset.close === 'lacuerda-modal') {
+    closeLacuerdaModal();
+    return;
+  }
+  // Click outside modal closes it
+  if (
+    t.classList &&
+    t.classList.contains('modal-overlay') &&
+    t.id === 'lacuerda-modal'
+  ) {
+    closeLacuerdaModal();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const m = $('lacuerda-modal');
+    if (m && m.style.display !== 'none') closeLacuerdaModal();
+  }
+});
+
 // ---------- Boot ----------
 render();
