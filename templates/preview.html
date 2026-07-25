@@ -59,7 +59,11 @@
 </main>
 
 <script>
-let transposeAmount = 0;
+// Read accumulated transpose from URL so the displayed counter is in
+// sync with the actually-rendered key on first load.
+const urlParams = new URLSearchParams(window.location.search);
+let transposeAmount = parseInt(urlParams.get('transpose') || '0', 10);
+document.getElementById('transpose-amount').textContent = transposeAmount;
 function transpose(n) {
   transposeAmount += n;
   document.getElementById('transpose-amount').textContent = transposeAmount;

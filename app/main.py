@@ -321,10 +321,34 @@ def import_lacuerda():
 
     title = parsed.get("title") or "Sin título"
     artist = parsed.get("artist") or ""
+
+    # Auto-detect key from the imported song. We look at the first chord
+    # that appears in the song (intro, or first block's first line) and
+    # use its root note as the tonalidad. Falls back to C if nothing
+    # parseable was found.
+    detected_key = "C"
+    if parsed.get("intro_chords"):
+        detected_key = parsed["intro_chords"][0]
+    else:
+        for b in parsed.get("blocks", []):
+            for ln in b.get("lines", []):
+                for c in ln.get("chords", []):
+                    sym = c.get("symbol", "")
+                    if not sym:
+                        continue
+                    root = re.match(r"^([A-G][#b]?)", sym)
+                    if root:
+                        detected_key = root.group(1)
+                        break
+                if detected_key != "C":
+                    break
+            if detected_key != "C":
+                break
+
     payload = {
         "title": title,
         "artist": artist,
-        "key": "C",
+        "key": detected_key,
         "capo": 0,
         "tempo": 120,
         "time_signature": "4/4",
@@ -478,11 +502,31 @@ def delete_song(song_id):
 
 @app.route("/api/songs/<int:song_id>/transpose", methods=["POST"])
 def api_transpose(song_id):
-    """Return song with all chords transposed by N semitones."""
+    """
+    Transpose and PERSIST. The client sends only the delta (e.g. +1, +1, -1)
+    and the server reads the current DB state, applies the delta, and writes
+    the result back. This makes consecutive clicks correctly accumulate
+    (Am → A#m → Bm) instead of always re-transposing from the original key.
+    """
     data = request.get_json(force=True) or {}
     n = int(data.get("semitones", 0))
+    if n == 0:
+        return jsonify(get_song_or_404(song_id))
     song = get_song_or_404(song_id)
     transposed = transpose_song(song, n)
+
+    # Persist to DB so the next click transposes from the new key.
+    db = get_db()
+    db.execute(
+        """
+        UPDATE songs SET
+            key = ?, content = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (transposed["key"], json.dumps(transposed["content"]), song_id),
+    )
+    db.commit()
+    db.close()
     return jsonify(transposed)
 
 
