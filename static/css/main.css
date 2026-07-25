@@ -642,3 +642,286 @@ main { padding-bottom: 80px; }
   gap: 8px;
   margin-top: 16px;
 }
+
+
+/* ---------- Bulk-paste modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+  animation: fadeIn 0.15s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 14px;
+  padding: 20px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.paste-modal { max-width: 600px; }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.modal-header h2 { font-size: 20px; margin: 0; }
+.modal-close {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 28px;
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { background: #27272a; color: #eaeaea; }
+
+.modal-hint { color: #9ca3af; font-size: 14px; margin-bottom: 10px; }
+.paste-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+.paste-rules li {
+  padding-left: 18px;
+  position: relative;
+  margin-bottom: 4px;
+}
+.paste-rules li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #7c3aed;
+}
+
+#paste-textarea {
+  width: 100%;
+  background: #0e0e10;
+  color: #eaeaea;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+#paste-textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+}
+
+.paste-preview-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+.paste-preview-info span {
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 18px;
+  margin-right: 4px;
+}
+.paste-clear {
+  background: transparent;
+  border: 1px solid #27272a;
+  color: #9ca3af;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.paste-clear:hover { color: #ef4444; border-color: #ef4444; }
+
+/* ---------- Chord popup improvements (mobile-friendly) ---------- */
+.chord-input-popup {
+  position: fixed;
+  z-index: 150;
+  background: #18181b;
+  border: 1px solid #7c3aed;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(124, 58, 237, 0.4);
+  min-width: 260px;
+  max-width: 340px;
+  animation: popIn 0.12s ease-out;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.chord-popup-header {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+#chord-input-field {
+  flex: 1;
+  background: #0e0e10;
+  color: #fbbf24;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+  text-transform: none;
+}
+#chord-input-field:focus {
+  outline: none;
+  border-color: #fbbf24;
+}
+.chord-popup-confirm, .chord-popup-cancel {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.chord-popup-confirm {
+  background: #10b981;
+  color: white;
+}
+.chord-popup-cancel {
+  background: #27272a;
+  color: #9ca3af;
+}
+.chord-popup-preview {
+  min-height: 22px;
+  text-align: center;
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.chord-suggestions { margin-top: 4px; }
+.chord-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 8px 0 4px;
+  padding-left: 2px;
+}
+.chord-group {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.chord-suggestions button {
+  background: #27272a;
+  color: #fbbf24;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 10px 6px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  min-height: 44px;  /* mobile tap target */
+  transition: all 0.1s;
+}
+.chord-suggestions button:hover,
+.chord-suggestions button:active {
+  background: #7c3aed;
+  color: white;
+  border-color: #fbbf24;
+  transform: scale(1.05);
+}
+
+/* ---------- Paste-lyrics button ---------- */
+.paste-lyrics-btn {
+  display: block;
+  width: 100%;
+  background: rgba(124, 58, 237, 0.1);
+  border: 2px dashed rgba(124, 58, 237, 0.4);
+  color: #7c3aed;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 8px 0;
+  transition: all 0.15s;
+}
+.paste-lyrics-btn:hover, .paste-lyrics-btn:active {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: #7c3aed;
+  color: white;
+}
+
+/* ---------- Line text placeholder & UX ---------- */
+.line-text:empty::before {
+  content: attr(data-placeholder);
+  color: #4b5563;
+  font-style: italic;
+  pointer-events: none;
+}
+.line-text:focus {
+  outline: none;
+  background: rgba(124, 58, 237, 0.04);
+  border-radius: 4px;
+}
+.line-text {
+  min-height: 28px;
+  padding: 6px 4px;
+  font-size: 17px;
+  line-height: 1.7;
+  cursor: text;
+  font-family: 'Georgia', serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile: full-width chord popup */
+@media (max-width: 600px) {
+  .chord-input-popup {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+  }
+  .modal-card {
+    max-height: 95vh;
+    padding: 16px;
+  }
+  #paste-textarea {
+    min-height: 160px;
+    font-size: 16px;  /* prevents iOS zoom */
+  }
+  .chord-group { grid-template-columns: repeat(3, 1fr); }
+  .chord-suggestions button { font-size: 16px; min-height: 48px; }
+}
+
+/* Make whole editor scrollable smoothly on mobile */
+.editor-body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}

@@ -76,15 +76,38 @@
 
 <!-- Floating chord input (template) -->
 <div class="chord-input-popup" id="chord-input-popup" style="display:none">
-  <input type="text" id="chord-input-field" placeholder="Am" maxlength="10">
+  <div class="chord-popup-header">
+    <input type="text" id="chord-input-field" placeholder="Am" maxlength="10" inputmode="text" autocomplete="off">
+    <button type="button" class="chord-popup-confirm" id="chord-confirm-btn">✓</button>
+    <button type="button" class="chord-popup-cancel" id="chord-cancel-btn">×</button>
+  </div>
+  <div class="chord-popup-preview" id="chord-preview"></div>
   <div class="chord-suggestions">
-    <button data-chord="C">C</button><button data-chord="D">D</button>
-    <button data-chord="E">E</button><button data-chord="F">F</button>
-    <button data-chord="G">G</button><button data-chord="A">A</button>
-    <button data-chord="B">B</button><button data-chord="Am">Am</button>
-    <button data-chord="Dm">Dm</button><button data-chord="Em">Em</button>
-    <button data-chord="F#m">F#m</button><button data-chord="G7">G7</button>
-    <button data-chord="D7">D7</button><button data-chord="Bm">Bm</button>
+    <div class="chord-group-label">Mayores</div>
+    <div class="chord-group">
+      <button data-chord="C">C</button><button data-chord="D">D</button>
+      <button data-chord="E">E</button><button data-chord="F">F</button>
+      <button data-chord="G">G</button><button data-chord="A">A</button>
+      <button data-chord="B">B</button>
+    </div>
+    <div class="chord-group-label">Menores</div>
+    <div class="chord-group">
+      <button data-chord="Am">Am</button><button data-chord="Dm">Dm</button>
+      <button data-chord="Em">Em</button><button data-chord="Bm">Bm</button>
+      <button data-chord="F#m">F#m</button><button data-chord="Cm">Cm</button>
+    </div>
+    <div class="chord-group-label">Séptimas</div>
+    <div class="chord-group">
+      <button data-chord="G7">G7</button><button data-chord="D7">D7</button>
+      <button data-chord="A7">A7</button><button data-chord="E7">E7</button>
+      <button data-chord="B7">B7</button><button data-chord="C7">C7</button>
+    </div>
+    <div class="chord-group-label">Sus / Otros</div>
+    <div class="chord-group">
+      <button data-chord="Dsus">Dsus</button><button data-chord="Asus">Asus</button>
+      <button data-chord="Esus">Esus</button><button data-chord="D/F#">D/F#</button>
+      <button data-chord="G/B">G/B</button><button data-chord="C/E">C/E</button>
+    </div>
   </div>
 </div>
 

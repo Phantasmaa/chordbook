@@ -54,6 +54,14 @@ function renderBlock(block, bi) {
     linesEl.appendChild(renderLine(line, bi, li));
   });
 
+  // Bulk-paste button (mobile-friendly: large tap target)
+  const pasteBtn = document.createElement('button');
+  pasteBtn.className = 'paste-lyrics-btn';
+  pasteBtn.textContent = '📋 Pegar letra';
+  pasteBtn.dataset.blockIdx = bi;
+  pasteBtn.dataset.action = 'paste-block';
+  linesEl.appendChild(pasteBtn);
+
   // Add line button
   const addLineBtn = document.createElement('button');
   addLineBtn.className = 'add-line-btn';
@@ -100,7 +108,10 @@ function renderLine(line, bi, li) {
   const textEl = document.createElement('div');
   textEl.className = 'line-text';
   textEl.contentEditable = 'true';
-  textEl.dataset.placeholder = 'Click para escribir letra...';
+  textEl.dataset.placeholder = 'Click para escribir letra…';
+  textEl.spellcheck = false;
+  textEl.autocapitalize = 'none';
+  textEl.autocorrect = 'off';
   textEl.textContent = line.text || '';
   textEl.addEventListener('input', () => {
     line.text = textEl.innerText;
@@ -117,12 +128,19 @@ function renderLine(line, bi, li) {
       removeLine(bi, li);
     }
   });
+  // Smart paste: split multi-line paste into separate lines
+  textEl.addEventListener('paste', (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text) return;
+    // If only one line, let default paste happen
+    if (!/\r?\n/.test(text)) return;
+    e.preventDefault();
+    bulkPasteIntoBlock(bi, text, li);
+  });
   // Click on text → place chord at click position
   textEl.addEventListener('click', (e) => {
     if (window.getSelection().toString()) return;
-    // Check if click landed near a chord already
     if (e.target.classList.contains('chord')) return;
-    // Position is approximate: count chars to click point
     const range = document.caretRangeFromPoint
       ? document.caretRangeFromPoint(e.clientX, e.clientY)
       : null;
@@ -187,6 +205,149 @@ function deleteBlock(bi) {
   dirty = true; render(); scheduleAutoSave();
 }
 
+// ---------- Bulk paste: split text into lines and append to a block ----------
+
+function splitLyricsIntoLines(text) {
+  // First try: split by newlines
+  let parts = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (parts.length > 1) return parts;
+  // No newlines: split by sentence-ending punctuation followed by space
+  parts = text.split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length > 1) return parts;
+  // No punctuation either: split by length (~50 chars per line)
+  parts = [];
+  const words = text.split(/\s+/);
+  let cur = '';
+  for (const w of words) {
+    if (cur && (cur.length + 1 + w.length) > 50) {
+      parts.push(cur);
+      cur = w;
+    } else {
+      cur = cur ? cur + ' ' + w : w;
+    }
+  }
+  if (cur) parts.push(cur);
+  return parts.length > 0 ? parts : [text.trim()];
+}
+
+function bulkPasteIntoBlock(bi, text, afterLi) {
+  const lines = splitLyricsIntoLines(text);
+  const block = SONG.content.blocks[bi];
+  let insertAt;
+  if (afterLi === undefined) {
+    // If the block has only one empty line, replace it instead of appending
+    if (block.lines.length === 1 && !block.lines[0].text.trim()) {
+      block.lines = lines.map(t => ({chords: [], text: t}));
+      dirty = true;
+      render();
+      scheduleAutoSave();
+      flashSave(`✓ ${lines.length} línea${lines.length>1?'s':''} pegada${lines.length>1?'s':''}`);
+      return;
+    }
+    insertAt = block.lines.length;
+  } else {
+    insertAt = afterLi + 1;
+  }
+  const newLines = lines.map(t => ({chords: [], text: t}));
+  block.lines.splice(insertAt, 0, ...newLines);
+  dirty = true;
+  render();
+  scheduleAutoSave();
+  flashSave(`✓ ${lines.length} línea${lines.length>1?'s':''} pegada${lines.length>1?'s':''}`);
+}
+
+function flashSave(msg) {
+  statusEl.textContent = msg;
+  statusEl.className = 'save-status';
+  setTimeout(() => { if (!dirty) statusEl.textContent = '✓ Guardado'; }, 2000);
+}
+
+function openPasteModal(bi) {
+  // Remove any existing modal
+  closePasteModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'paste-modal-overlay';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card paste-modal">
+      <div class="modal-header">
+        <h2>📋 Pegar letra</h2>
+        <button class="modal-close" aria-label="Cerrar">×</button>
+      </div>
+      <p class="modal-hint">Pegá la letra completa. Las líneas se separan automáticamente:</p>
+      <ul class="paste-rules">
+        <li>Si hay saltos de línea, cada una es una línea de la canción</li>
+        <li>Si no los hay, se separa por puntos/contrato</li>
+        <li>Si tampoco, se corta cada ~50 caracteres</li>
+      </ul>
+      <textarea id="paste-textarea" placeholder="Pegá acá la letra copiada de Genius, Letras.com, etc." rows="10" autofocus></textarea>
+      <div class="paste-preview-info">
+        <span id="paste-line-count">0</span> líneas detectadas
+        <button type="button" class="paste-clear">Borrar</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary modal-cancel">Cancelar</button>
+        <button type="button" class="btn-primary paste-confirm">Pegar y separar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const ta = overlay.querySelector('#paste-textarea');
+  const counter = overlay.querySelector('#paste-line-count');
+  const clear = overlay.querySelector('.paste-clear');
+  const confirm = overlay.querySelector('.paste-confirm');
+  const cancel = overlay.querySelector('.modal-cancel');
+  const close = overlay.querySelector('.modal-close');
+
+  function updateCount() {
+    const lines = splitLyricsIntoLines(ta.value || '');
+    counter.textContent = lines.length;
+    confirm.disabled = lines.length === 0;
+    confirm.textContent = lines.length === 0
+      ? 'Pegar y separar'
+      : `Pegar ${lines.length} línea${lines.length>1?'s':''}`;
+  }
+  ta.addEventListener('input', updateCount);
+  clear.addEventListener('click', () => { ta.value = ''; updateCount(); ta.focus(); });
+  const closeFn = () => closePasteModal();
+  cancel.addEventListener('click', closeFn);
+  close.addEventListener('click', closeFn);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeFn(); });
+  confirm.addEventListener('click', () => {
+    if (!ta.value.trim()) return;
+    bulkPasteIntoBlock(bi, ta.value);
+    closeFn();
+  });
+
+  // Mobile paste gesture: tap-and-hold on textarea usually opens native paste on Android
+  // Add a "Paste from clipboard" button using Clipboard API
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    const clipBtn = document.createElement('button');
+    clipBtn.type = 'button';
+    clipBtn.className = 'btn-secondary paste-from-clip';
+    clipBtn.textContent = '📥 Pegar del portapapeles';
+    clipBtn.addEventListener('click', async () => {
+      try {
+        const t = await navigator.clipboard.readText();
+        ta.value = t;
+        updateCount();
+      } catch (e) {
+        alert('No se pudo leer del portapapeles. Pegá manualmente con Ctrl+V / botón Pegar del teclado.');
+      }
+    });
+    overlay.querySelector('.modal-actions').insertBefore(clipBtn, cancel);
+  }
+
+  setTimeout(() => ta.focus(), 50);
+  updateCount();
+}
+
+function closePasteModal() {
+  const m = document.getElementById('paste-modal-overlay');
+  if (m) m.remove();
+}
+
 function addLineAfter(bi, li) {
   SONG.content.blocks[bi].lines.splice(li + 1, 0, {chords: [], text: ''});
   dirty = true; render(); scheduleAutoSave();
@@ -213,13 +374,24 @@ function openChordInput(bi, li, position, screenX, screenY) {
   const popup = document.getElementById('chord-input-popup');
   const field = document.getElementById('chord-input-field');
   popup.style.display = 'block';
-  popup.style.left = Math.min(screenX, window.innerWidth - 200) + 'px';
-  popup.style.top = Math.min(screenY, window.innerHeight - 200) + 'px';
+  // Position popup above click point
+  const pw = popup.offsetWidth || 240;
+  const ph = popup.offsetHeight || 280;
+  let left = Math.min(screenX, window.innerWidth - pw - 8);
+  let top = screenY - ph - 12;
+  if (top < 12) top = Math.min(screenY + 32, window.innerHeight - ph - 12);
+  if (left < 8) left = 8;
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
   field.value = '';
   field.focus();
+  field.dataset.editing = '';
   field.dataset.blockIdx = bi;
   field.dataset.lineIdx = li;
   field.dataset.position = position;
+  // Reset preview indicator
+  const prev = popup.querySelector('#chord-preview');
+  if (prev) prev.textContent = '';
 }
 
 function editChord(bi, li, ci, span) {
@@ -385,12 +557,14 @@ container.addEventListener('click', (e) => {
   else if (action === 'add-line') {
     const afterLi = +btn.dataset.lineIdx;
     if (afterLi === -1) {
-      // Add at end of block
       const lastIdx = SONG.content.blocks[bi].lines.length - 1;
       addLineAfter(bi, lastIdx);
     } else {
       addLineAfter(bi, afterLi);
     }
+  }
+  else if (action === 'paste-block') {
+    openPasteModal(bi);
   }
   else if (action === 'add-chord') {
     const textEl = btn.closest('.line').querySelector('.line-text');
@@ -448,18 +622,40 @@ chordField.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); commitChord(); }
   if (e.key === 'Escape') { closeChordInput(); }
 });
-chordField.addEventListener('blur', () => {
-  setTimeout(() => {
-    if (!chordField.value.trim()) closeChordInput();
-  }, 100);
+chordField.addEventListener('input', () => {
+  const prev = document.getElementById('chord-preview');
+  if (prev) prev.textContent = chordField.value;
 });
 
+// Confirm / Cancel buttons
+document.getElementById('chord-confirm-btn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  commitChord();
+});
+document.getElementById('chord-cancel-btn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  chordField.value = '';
+  closeChordInput();
+});
+
+// Tap on a suggestion fills field + commits
 document.querySelectorAll('.chord-suggestions button').forEach(btn => {
   btn.addEventListener('mousedown', (e) => {
     e.preventDefault();
     chordField.value = btn.dataset.chord;
     commitChord();
   });
+});
+
+// Tap outside popup closes it
+document.addEventListener('mousedown', (e) => {
+  const popup = document.getElementById('chord-input-popup');
+  if (!popup || popup.style.display === 'none') return;
+  if (popup.contains(e.target)) return;
+  // Don't close if clicking the line text (re-position popup)
+  if (e.target.closest('.line-text')) return;
+  if (e.target.classList && e.target.classList.contains('chord')) return;
+  closeChordInput();
 });
 
 // Warn before leaving
