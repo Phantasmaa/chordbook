@@ -66,57 +66,107 @@ body {
   border-radius: 4px;
   font-weight: 600;
 }
+/* Slim bottom bar instead of a chunky top pill — it stops blocking the
+   first chord/lyric line. A tiny floating handle on the right lets you
+   re-open it after it auto-hides on scroll. */
 .preview-controls {
   position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
   display: flex;
-  gap: 8px;
-  z-index: 100;
-  background: rgba(14, 14, 16, 0.95);
-  padding: 8px;
-  border-radius: 8px;
-  backdrop-filter: blur(8px);
+  gap: 6px;
   align-items: center;
-  max-width: calc(100% - 24px);
-  flex-wrap: wrap;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: rgba(14, 14, 16, 0.78);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #27272a;
+  transform: translateY(0);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+.preview-controls.is-collapsed {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.preview-controls button {
+  font-size: 13px;
+  padding: 4px 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #d4d4d8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.preview-controls button:hover {
+  background: #1f1f23;
+  border-color: #3f3f46;
+  color: #fafafa;
+}
+.preview-controls #transpose-amount {
+  color: #fbbf24;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+  font-size: 13px;
+}
+.preview-controls .separator {
+  color: #3f3f46;
+  font-size: 11px;
+  user-select: none;
+}
+.preview-controls #toggle-header-btn.active {
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+/* Tiny floating handle (top-right) — replaces the old huge bar when
+   totally hidden. */
+.preview-controls-handle {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 95;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(14, 14, 16, 0.78);
+  backdrop-filter: blur(10px);
   border: 1px solid #27272a;
+  color: #d4d4d8;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.preview-controls-handle.visible { display: flex; }
+.preview-controls-handle:hover {
+  background: #1f1f23;
+  color: #fafafa;
 }
 .preview-content {
-  /* Leave room for the fixed control bar at top */
-  padding-top: 60px;
+  /* Slim bottom bar — only need a small bottom pad so the last chord
+     line doesn't sit under the controls. */
   max-width: 760px;
   margin: 0 auto;
-  padding-left: 16px;
-  padding-right: 16px;
-  padding-bottom: 16px;
+  padding: 8px 16px 56px;
 }
 @media (max-width: 600px) {
   .preview-content {
     padding-left: 12px;
     padding-right: 12px;
-    padding-top: 56px;
+    padding-bottom: 48px;
   }
 }
-.preview-controls button {
-  background: #27272a;
-  color: #eaeaea;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-}
-.preview-controls button.primary {
-  background: #7c3aed;
-  color: white;
-}
-.preview-controls button:hover { opacity: 0.85; }
-.preview-controls button.active { background: #7c3aed; color: white; }
-.preview-controls .separator { color: #4b5563; padding: 0 4px; }
+/* (button styles live in the bottom-bar block above — keep this
+   paragraph clean) */
 
 .preview-block {
   margin-bottom: 14px;

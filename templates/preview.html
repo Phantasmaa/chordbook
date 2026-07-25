@@ -19,7 +19,7 @@
   </div>
 </header>
 
-<div class="preview-controls">
+<div class="preview-controls" id="preview-controls">
   <button onclick="transpose(-1)">−</button>
   <span id="transpose-amount">0</span>
   <button onclick="transpose(1)">+</button>
@@ -29,6 +29,7 @@
   <span class="separator">|</span>
   <button onclick="window.print()">Imprimir</button>
 </div>
+<button class="preview-controls-handle" id="preview-controls-handle" onclick="showBar()" title="Mostrar controles">⚙</button>
 
 <main class="preview-content">
 {# No section markers (verso/coro/intro) — Manuel said remove them. #}
@@ -162,37 +163,34 @@ function applyHeaderMode() {
   TOG_BTN.classList.toggle('active', headerMode !== 'full');
 }
 
-// Auto-hide on scroll-down / show on scroll-up. Only fires when in 'full'
-// mode — manual 'compact' or 'hidden' are user choices we never override.
-let lastY = window.scrollY;
-let autoCollapsed = false;
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  // Manual choice wins — never touch the header, but keep lastY fresh
-  // so when the user toggles back to 'full' the next scroll behaves.
-  if (headerMode !== 'full') { lastY = y; return; }
-  // Use a small threshold so a single wheel tick doesn't fire collapse.
-  const delta = y - lastY;
-  if (delta > 4 && y > 80) {
-    if (!autoCollapsed) {
-      HEADER.classList.add('is-collapsed');
-      autoCollapsed = true;
-    }
-  } else if (delta < -4) {
-    if (autoCollapsed) {
-      HEADER.classList.remove('is-collapsed');
-      autoCollapsed = false;
-    }
-  }
-  lastY = y;
-}, { passive: true });
-
 // Run chord alignment now and on every resize / font load.
 alignChords();
 window.addEventListener('resize', alignChords);
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(alignChords);
 }
+// ----- Bottom controls bar --------------------------------------------------
+// The bar lives at the bottom of the screen so it never blocks the first
+// chord line. The user can dismiss it manually (taps the gear handle to
+// hide, taps again to show). We don't auto-hide on scroll because that
+// competes with the header auto-collapse listener and creates a feedback
+// loop — every time the header collapses it changes the page height, the
+// scrollY jumps, the bar listener re-fires, etc.
+const BAR = document.getElementById('preview-controls');
+const HANDLE = document.getElementById('preview-controls-handle');
+let barHidden = false;
+
+HANDLE.addEventListener('click', () => {
+  if (barHidden) {
+    BAR.classList.remove('is-collapsed');
+    HANDLE.classList.remove('visible');
+    barHidden = false;
+  } else {
+    BAR.classList.add('is-collapsed');
+    HANDLE.classList.add('visible');
+    barHidden = true;
+  }
+});
 </script>
 </body>
 </html>
