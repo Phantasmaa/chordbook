@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ song.title }} — Vista previa</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/preview.css') }}">
+</head>
+<body class="preview-mode">
+<header class="preview-header">
+  <h1>{{ song.title }}</h1>
+  <div class="preview-meta">
+    {% if song.artist %}<span>{{ song.artist }}</span>{% endif %}
+    <span class="key-badge">{{ song.key }}</span>
+    {% if song.capo %}<span>Capo: {{ song.capo }}</span>{% endif %}
+    <span>♩ {{ song.tempo }}</span>
+    <span>{{ song.time_signature }}</span>
+  </div>
+  <div class="preview-controls">
+    <button onclick="transpose(-1)">−</button>
+    <span id="transpose-amount">0</span>
+    <button onclick="transpose(1)">+</button>
+    <span class="separator">|</span>
+    <button onclick="toggleAutoScroll()">Auto-scroll</button>
+    <button onclick="window.print()">Imprimir</button>
+  </div>
+</header>
+
+<main class="preview-content">
+  {% for block in song.content.blocks %}
+  <section class="preview-block" data-type="{{ block.type }}">
+    <h2 class="preview-section-name">{{ block.name }}</h2>
+    {% for line in block.lines %}
+    <div class="preview-line">
+      <div class="preview-chord-line">
+        {% set chars = line.text %}
+        {% set ns = namespace(chord_map={}) %}
+        {% for c in line.chords %}
+          {% set ns.chord_map = ns.chord_map.update({c.position: c.symbol}) or ns.chord_map %}
+        {% endfor %}
+        {% if line.chords %}
+          {% set max_pos = line.chords|map(attribute='position')|max %}
+          {% set ns2 = namespace(out='') %}
+          {% for i in range(max_pos + 12) %}
+            {% if i in ns.chord_map %}
+              {% set ns2.out = ns2.out + ns.chord_map[i] %}
+            {% else %}
+              {% set ns2.out = ns2.out + ' ' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns2.out }}
+        {% endif %}
+      </div>
+      <div class="preview-text-line">{{ line.text }}</div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</main>
+
+<script>
+let transposeAmount = 0;
+function transpose(n) {
+  transposeAmount += n;
+  document.getElementById('transpose-amount').textContent = transposeAmount;
+  const url = new URL(window.location);
+  url.searchParams.set('transpose', transposeAmount);
+  window.location = url.toString();
+}
+let scrolling = false, scrollTimer = null;
+function toggleAutoScroll() {
+  scrolling = !scrolling;
+  if (scrolling) {
+    scrollTimer = setInterval(() => {
+      window.scrollBy(0, 1);
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+        clearInterval(scrollTimer);
+        scrolling = false;
+      }
+    }, 50);
+  } else {
+    clearInterval(scrollTimer);
+  }
+}
+</script>
+</body>
+</html>

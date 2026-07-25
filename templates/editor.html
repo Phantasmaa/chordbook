@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ song.title }} — Chordbook{% endblock %}
+{% block content %}
+
+<div class="editor-header">
+  <input type="text" id="song-title" class="title-input" value="{{ song.title }}" placeholder="Título">
+  <input type="text" id="song-artist" class="artist-input" value="{{ song.artist or '' }}" placeholder="Artista">
+</div>
+
+<div class="meta-bar">
+  <div class="meta-field">
+    <label>Tonalidad</label>
+    <select id="song-key">
+      {% for k in keys_sharp %}
+      <option value="{{ k }}" {% if song.key==k %}selected{% endif %}>{{ k }}</option>
+      {% endfor %}
+      <optgroup label="Bemoles">
+      {% for k in keys_flat %}
+        {% if k not in keys_sharp %}
+        <option value="{{ k }}" {% if song.key==k %}selected{% endif %}>{{ k }}</option>
+        {% endif %}
+      {% endfor %}
+      </optgroup>
+    </select>
+  </div>
+  <div class="meta-field">
+    <label>Capo</label>
+    <input type="number" id="song-capo" min="0" max="12" value="{{ song.capo or 0 }}">
+  </div>
+  <div class="meta-field">
+    <label>Tempo (BPM)</label>
+    <input type="number" id="song-tempo" min="40" max="240" value="{{ song.tempo or 120 }}">
+  </div>
+  <div class="meta-field">
+    <label>Compás</label>
+    <select id="song-time">
+      <option {% if song.time_signature=='4/4' %}selected{% endif %}>4/4</option>
+      <option {% if song.time_signature=='3/4' %}selected{% endif %}>3/4</option>
+      <option {% if song.time_signature=='6/8' %}selected{% endif %}>6/8</option>
+      <option {% if song.time_signature=='2/4' %}selected{% endif %}>2/4</option>
+      <option {% if song.time_signature=='12/8' %}selected{% endif %}>12/8</option>
+    </select>
+  </div>
+  <div class="meta-actions">
+    <button class="btn-transpose" data-dir="-1" title="Bajar medio tono">−</button>
+    <button class="btn-transpose" data-dir="+1" title="Subir medio tono">+</button>
+    <button class="btn-icon" id="btn-preview" title="Vista previa">👁</button>
+    <button class="btn-icon" id="btn-pdf" title="Exportar PDF">📄</button>
+    <button class="btn-icon danger" id="btn-delete" title="Eliminar">🗑</button>
+    <span class="save-status" id="save-status">✓ Guardado</span>
+  </div>
+</div>
+
+<div class="tag-bar">
+  <input type="text" id="song-tags" placeholder="Tags separados por coma (rock, acoustic, worship...)"
+         value="{{ song.tags|join(', ') if song.tags else '' }}">
+</div>
+
+<div id="blocks-container" class="blocks-container">
+  <!-- Los bloques se renderizan con JS -->
+</div>
+
+<div class="add-section-bar">
+  <button class="btn-section" data-type="verse">+ Verso</button>
+  <button class="btn-section" data-type="chorus">+ Coro</button>
+  <button class="btn-section" data-type="bridge">+ Puente</button>
+  <button class="btn-section" data-type="intro">+ Intro</button>
+  <button class="btn-section" data-type="outro">+ Outro</button>
+  <button class="btn-section" data-type="pre-chorus">+ Pre-coro</button>
+</div>
+
+<!-- Floating chord input (template) -->
+<div class="chord-input-popup" id="chord-input-popup" style="display:none">
+  <input type="text" id="chord-input-field" placeholder="Am" maxlength="10">
+  <div class="chord-suggestions">
+    <button data-chord="C">C</button><button data-chord="D">D</button>
+    <button data-chord="E">E</button><button data-chord="F">F</button>
+    <button data-chord="G">G</button><button data-chord="A">A</button>
+    <button data-chord="B">B</button><button data-chord="Am">Am</button>
+    <button data-chord="Dm">Dm</button><button data-chord="Em">Em</button>
+    <button data-chord="F#m">F#m</button><button data-chord="G7">G7</button>
+    <button data-chord="D7">D7</button><button data-chord="Bm">Bm</button>
+  </div>
+</div>
+
+<!-- Hidden song data bootstrap -->
+<script id="song-data" type="application/json">{{ song|tojson }}</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+{% endblock %}

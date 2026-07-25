@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0e10">
+<title>{% block title %}Chordbook{% endblock %}</title>
+<link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body>
+<nav class="topnav">
+  <a href="{{ url_for('index') }}" class="brand">🎸 Chordbook</a>
+  <div class="nav-actions">
+    <a href="{{ url_for('setlists_index') }}" class="nav-link">Setlists</a>
+    <a href="{{ url_for('new_song') }}" class="nav-btn">+ Nueva</a>
+  </div>
+</nav>
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+data/*.db
+uploads/
+*.log
+node_modules/
+.idea/
+.vscode/
+PLAN.md
+mockup/
