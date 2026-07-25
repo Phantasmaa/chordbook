@@ -295,6 +295,16 @@ def api_setlist_modify_songs(setlist_id):
             "DELETE FROM setlist_songs WHERE setlist_id = ? AND song_id = ?",
             (setlist_id, song_id),
         )
+    # compact positions to remove gaps (1,2,3... instead of 1,3,5...)
+    rows = db.execute(
+        "SELECT song_id FROM setlist_songs WHERE setlist_id = ? ORDER BY position",
+        (setlist_id,),
+    ).fetchall()
+    for i, row in enumerate(rows, start=1):
+        db.execute(
+            "UPDATE setlist_songs SET position = ? WHERE setlist_id = ? AND song_id = ?",
+            (i, setlist_id, row["song_id"]),
+        )
     db.commit()
     db.close()
     return jsonify({"ok": True})
