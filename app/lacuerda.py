@@ -27,6 +27,54 @@ USER_AGENT = (
 SPOTCHECK_URL = "https://acordes.lacuerda.net/TXT/gatos/la_balsa.txt"
 
 
+# =========================================================================
+# Latin chord notation (DO/RE/MI/FA/SOL/LA/SI) → English (C/D/E/F/G/A/B).
+# LaCuerda delivers some songs in latin cipher (often religious / catholic
+# music). We normalize everything to English so the editor / transpose
+# logic only deals with one alphabet.
+# =========================================================================
+LATIN_TO_ENG = {
+    "DO": "C",
+    "RE": "D",
+    "MI": "E",
+    "FA": "F",
+    "SOL": "G",
+    "LA": "A",
+    "SI": "B",
+}
+
+# Single regex that matches both cifrado inglés and cifrado latino.
+# Examples:  C, C#, Cb, Cm, C7, Cmaj7, Csus4, Cadd9, F#m, Bbm7,
+#            DO, RE, MI, FA, SOL, LA, SI, LAm, SOLm, FA#m, etc.
+# We also accept a parenthesized voicing like (x32010) glued after the name.
+_CHORD_RE = re.compile(
+    r"(?:DO|RE|MI|FA|SOL|LA|SI|[A-G])"
+    r"(?:#|b)?"
+    r"(?:m|maj|sus[24]?|add[0-9]+|[0-9])*"
+    r"(?:\([^)]*\))?",
+    re.IGNORECASE,
+)
+
+
+def _normalize_chord_symbol(sym: str) -> str:
+    """
+    Convert 'LAm' → 'Am', 'SOL' → 'G', 'FAsus4' → 'Fsus4', 'SIbm7' → 'Bbm7'.
+    Returns the symbol with Latin root replaced by English root.
+    """
+    if not sym:
+        return sym
+    upper = sym.upper()
+    # Find the latin root at the start (2 letters)
+    for lat in ("SOL", "DO", "RE", "MI", "FA", "LA", "SI"):
+        if upper.startswith(lat):
+            # Preserve the rest of the chord (m, 7, sus, etc.)
+            rest = sym[len(lat):]
+            # Preserve original case of the modifier suffix
+            # so 'Am' stays 'Am' (A + m) instead of becoming 'A' + 'm'
+            return LATIN_TO_ENG[lat] + rest
+    return sym
+
+
 def _find_chord_positions(chord_line: str, lyrics_line: str) -> List[Dict]:
     """
     Given a chord line like '       E                    F#' (chord strings
@@ -40,15 +88,19 @@ def _find_chord_positions(chord_line: str, lyrics_line: str) -> List[Dict]:
     the chord at column 0 lines up with the first letter "E". So the chord
     column should be measured *relative to the lyric's indent*, not absolute.
     Concretely: `pos = chord_column - leading_indent_of_lyric_line`.
+
+    Latin notation (LAm, FA, SOL, etc.) is normalized to English (Am, F, G).
     """
     # Find the lyric's leading indentation
     lyric_lead = len(lyrics_line) - len(lyrics_line.lstrip())
     chords: List[Dict] = []
 
-    for m in re.finditer(r"\S+", chord_line):
+    for m in _CHORD_RE.finditer(chord_line):
         symbol = m.group(0).strip()
         if not symbol or not re.search(r"[A-Za-z]", symbol):
             continue
+        # Normalize Latin root to English
+        symbol = _normalize_chord_symbol(symbol)
         # Column-relative to the lyric's first letter
         col = max(0, m.start() - lyric_lead)
         chords.append({"symbol": symbol, "pos": col})
@@ -159,16 +211,10 @@ def parse_lacuerda_txt(raw: str) -> Dict:
             rest_clean = re.sub(r"x\s*\d+", "", rest)
             rest_clean = re.sub(r"\(\d+\)", "", rest_clean)
             rest_clean = rest_clean.strip()
-            chord_tokens = re.findall(
-                r"[A-G][#b]?(?:m|maj[7]?|sus[24]?|add[0-9]+|[0-9](?:sus)?)?",
-                rest_clean,
-            )
+            # Match BOTH latin (DO, REM, SOL) and english (C, Dm, G) roots
+            chord_tokens = _CHORD_RE.findall(rest_clean)
             # Reject if rest contains uppercase letters beyond chord tokens
-            rest_punct = re.sub(
-                r"[A-G][#b]?(?:m|maj[7]?|sus[24]?|add[0-9]+|[0-9](?:sus)?)?",
-                "",
-                rest_clean,
-            )
+            rest_punct = _CHORD_RE.sub("", rest_clean)
             rest_punct = re.sub(r"[\s,]", "", rest_punct)
             if (
                 rest_clean
@@ -181,7 +227,8 @@ def parse_lacuerda_txt(raw: str) -> Dict:
                 mul_m = re.search(r"x\s*(\d+)", rest)
                 if mul_m:
                     mul = int(mul_m.group(1))
-                intro_chords = chord_tokens * mul
+                # Normalize Latin chord tokens to English
+                intro_chords = [_normalize_chord_symbol(t) for t in chord_tokens] * mul
                 # don't open a new block; these go in song-level intro
                 i += 1
                 continue
@@ -212,15 +259,19 @@ def parse_lacuerda_txt(raw: str) -> Dict:
         # content (no spaces inside words that look like Spanish words),
         # we treat it as a chord line.
         def looks_like_chord_line(s: str) -> bool:
-            # Has at least one chord-like token
-            tokens = re.findall(r"[A-G][#b]?(?:m|maj|sus[24]?|add[0-9]+|[0-9])?(?:\(.*?\))?",
-                                s)
+            """
+            Returns True if the line is purely a chord line, with tokens
+            that match either English (C, Dm, F#) or Latin (DO, REm, SOL)
+            chord notation. Tolerant of internal whitespace between tokens.
+            """
+            tokens = _CHORD_RE.findall(s)
             if not tokens:
                 return False
-            # If the strip has only those tokens + spaces/indent, it's a chord line
-            stripped = s.strip()
-            rebuilt = " ".join(tokens)
-            return rebuilt.replace(" ", "") == stripped.replace(" ", "")
+            # Strip both original and rebuilt of whitespace
+            # so "LAm FA LAm" matches tokens ["LAm","FA","LAm"] → "LAmFALAm"
+            stripped = re.sub(r"\s+", "", s)
+            rebuilt = "".join(tokens)
+            return rebuilt == stripped
 
         # Standalone chord progression line (no lyrics below) — skip
         if looks_like_chord_line(ln) and (i + 1 >= n or not lines[i + 1].strip()):
@@ -238,6 +289,14 @@ def parse_lacuerda_txt(raw: str) -> Dict:
         ):
             chord_line = ln
             lyric_line = lines[i + 1]
+
+            # If the next line is also a chord-only line, both are
+            # interludio / instrumental progression — skip both rather
+            # than pairing them as chord-over-lyrics.
+            if looks_like_chord_line(lyric_line):
+                i += 2
+                continue
+
             positions = _find_chord_positions(chord_line, lyric_line)
             current_block["lines"].append(
                 {"text": lyric_line.rstrip(), "chords": positions}
