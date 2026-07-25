@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Setlists — Chordbook{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>Setlists</h1>
+    <button id="new-setlist-btn" class="btn-primary">+ Nuevo setlist</button>
+  </div>
+
+  <div id="setlists-list">
+    {% if setlists %}
+      {% for sl in setlists %}
+      <a class="card setlist-card" href="{{ url_for('setlist_view', setlist_id=sl.id) }}">
+        <div class="setlist-card-body">
+          <h3>{{ sl.name }}</h3>
+          {% if sl.description %}<p class="dim">{{ sl.description }}</p>{% endif %}
+          <p class="meta">Creado {{ sl.created_at[:10] if sl.created_at else '' }}</p>
+        </div>
+        <form method="post" action="{{ url_for('delete_setlist', setlist_id=sl.id) }}"
+              onsubmit="return confirm('¿Borrar setlist &quot;{{ sl.name }}&quot;?');"
+              class="delete-form">
+          <button type="submit" class="btn-icon-danger" aria-label="Borrar">×</button>
+        </form>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <p class="dim">No hay setlists todavía.</p>
+        <p class="dim small">Creá uno para agrupar canciones para tocar en vivo.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="new-setlist-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Nuevo setlist</h2>
+    <form id="new-setlist-form">
+      <label>Nombre<input name="name" required placeholder="Ej: Recital viernes"></label>
+      <label>Descripción<textarea name="description" rows="3" placeholder="Opcional"></textarea></label>
+      <div class="modal-actions">
+        <button type="button" id="cancel-modal" class="btn-secondary">Cancelar</button>
+        <button type="submit" class="btn-primary">Crear</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const modal = document.getElementById('new-setlist-modal');
+  const btn = document.getElementById('new-setlist-btn');
+  const cancel = document.getElementById('cancel-modal');
+  if (btn) btn.addEventListener('click', () => modal.classList.remove('hidden'));
+  if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+
+  document.getElementById('new-setlist-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const r = await fetch('/api/setlists', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name: fd.get('name'), description: fd.get('description')})
+    });
+    if (r.ok) location.reload();
+    else alert('Error creando setlist');
+  });
+})();
+</script>
+{% endblock %}

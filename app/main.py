@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flask import (
-    Flask, abort, jsonify, render_template,
+    Flask, abort, jsonify, redirect, render_template,
     request, send_file, url_for,
 )
 
@@ -364,6 +364,53 @@ def create_setlist():
     db.commit()
     db.close()
     return jsonify({"id": cur.lastrowid}), 201
+
+
+@app.route("/setlist/<int:setlist_id>/delete", methods=["POST"])
+def delete_setlist(setlist_id):
+    db = get_db()
+    db.execute("DELETE FROM setlists WHERE id = ?", (setlist_id,))
+    db.commit()
+    db.close()
+    return redirect(url_for("setlists_index"))
+
+
+@app.route("/setlist/<int:setlist_id>/remove/<int:song_id>", methods=["POST"])
+def remove_from_setlist(setlist_id, song_id):
+    db = get_db()
+    db.execute("DELETE FROM setlist_songs WHERE setlist_id = ? AND song_id = ?",
+               (setlist_id, song_id))
+    db.commit()
+    db.close()
+    return redirect(url_for("setlist_view", setlist_id=setlist_id))
+
+
+@app.route("/song/<int:song_id>/add-to-setlist", methods=["POST"])
+def add_to_setlist(song_id):
+    setlist_id = request.form.get("setlist_id", type=int)
+    if not setlist_id:
+        # pick the first/only setlist or create a default one
+        db = get_db()
+        row = db.execute("SELECT id FROM setlists ORDER BY id LIMIT 1").fetchone()
+        db.close()
+        if row:
+            setlist_id = row["id"]
+        else:
+            db = get_db()
+            cur = db.execute("INSERT INTO setlists (name, description) VALUES (?, ?)",
+                             ("Mi setlist", ""))
+            db.commit()
+            setlist_id = cur.lastrowid
+            db.close()
+
+    db = get_db()
+    pos = db.execute("SELECT COALESCE(MAX(position),0)+1 AS p FROM setlist_songs WHERE setlist_id = ?",
+                     (setlist_id,)).fetchone()["p"]
+    db.execute("""INSERT OR IGNORE INTO setlist_songs (setlist_id, song_id, position)
+                  VALUES (?, ?, ?)""", (setlist_id, song_id, pos))
+    db.commit()
+    db.close()
+    return redirect(url_for("setlist_view", setlist_id=setlist_id))
 
 
 @app.route("/api/setlists/<int:setlist_id>/pdf")

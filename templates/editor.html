@@ -46,6 +46,11 @@
     <button class="btn-transpose" data-dir="+1" title="Subir medio tono">+</button>
     <button class="btn-icon" id="btn-preview" title="Vista previa">👁</button>
     <button class="btn-icon" id="btn-pdf" title="Exportar PDF">📄</button>
+    {% if song.id %}
+    <form method="post" action="{{ url_for('add_to_setlist', song_id=song.id) }}" class="inline-form">
+      <button type="submit" class="btn-icon" title="Agregar a setlist">➕</button>
+    </form>
+    {% endif %}
     <button class="btn-icon danger" id="btn-delete" title="Eliminar">🗑</button>
     <span class="save-status" id="save-status">✓ Guardado</span>
   </div>

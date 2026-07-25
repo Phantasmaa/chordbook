@@ -1,0 +1,123 @@
+/* Chordbook — preview styles (chord-over-lyrics view for live playing) */
+
+body {
+  background: #0e0e10;
+  color: #eaeaea;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.preview-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.preview-header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #27272a;
+}
+.preview-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.preview-header .meta {
+  color: #9ca3af;
+  font-size: 14px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.preview-header .meta strong { color: #eaeaea; }
+.preview-actions {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  margin-bottom: 16px;
+  background: rgba(14, 14, 16, 0.95);
+  padding: 8px;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+.preview-actions a, .preview-actions button {
+  background: #27272a;
+  color: #eaeaea;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.preview-actions a.primary, .preview-actions button.primary {
+  background: #7c3aed;
+  color: white;
+}
+.preview-actions a:hover, .preview-actions button:hover { opacity: 0.85; }
+
+.block {
+  margin-bottom: 32px;
+}
+.block-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #27272a;
+}
+.line {
+  margin-bottom: 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+.chord-line {
+  color: #fbbf24;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  font-size: 16px;
+  min-height: 1.2em;
+  white-space: pre;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+.lyric-line {
+  color: #eaeaea;
+  white-space: pre-wrap;
+  font-size: 18px;
+}
+
+.transpose-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: #18181b;
+  border-radius: 8px;
+  padding: 4px;
+}
+.transpose-controls button {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #eaeaea;
+  border: none;
+  border-radius: 4px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.transpose-controls button:hover { background: #27272a; }
+.transpose-controls span {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
