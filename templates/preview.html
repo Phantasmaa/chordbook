@@ -17,17 +17,18 @@
     <span>♩ {{ song.tempo }}</span>
     <span>{{ song.time_signature }}</span>
   </div>
-  <div class="preview-controls">
-    <button onclick="transpose(-1)">−</button>
-    <span id="transpose-amount">0</span>
-    <button onclick="transpose(1)">+</button>
-    <span class="separator">|</span>
-    <button onclick="toggleAutoScroll()">Auto-scroll</button>
-    <button id="toggle-header-btn" onclick="toggleHeader()" title="Mostrar / ocultar cabecera">⟪⟫ Cabecera</button>
-    <span class="separator">|</span>
-    <button onclick="window.print()">Imprimir</button>
-  </div>
 </header>
+
+<div class="preview-controls">
+  <button onclick="transpose(-1)">−</button>
+  <span id="transpose-amount">0</span>
+  <button onclick="transpose(1)">+</button>
+  <span class="separator">|</span>
+  <button onclick="toggleAutoScroll()">Auto-scroll</button>
+  <button id="toggle-header-btn" onclick="toggleHeader()" title="Mostrar / ocultar cabecera">⟪⟫ Cabecera</button>
+  <span class="separator">|</span>
+  <button onclick="window.print()">Imprimir</button>
+</div>
 
 <main class="preview-content">
 {# No section markers (verso/coro/intro) — Manuel said remove them. #}
@@ -101,6 +102,10 @@ function toggleHeader() {
              : (headerMode === 'compact') ? 'hidden'
              : 'full';
   applyHeaderMode();
+  // Reset the auto-collapse tracker — user just made an explicit choice,
+  // don't let stale lastY fire a phantom scroll-up re-expand.
+  lastY = window.scrollY;
+  autoCollapsed = false;
   localStorage.setItem('preview.headerMode', headerMode);
 }
 
@@ -114,23 +119,23 @@ function applyHeaderMode() {
   TOG_BTN.classList.toggle('active', headerMode !== 'full');
 }
 
-// Auto-hide on scroll-down / show on scroll-up. Three modes:
-//   'full'    → user wants everything visible
-//   'compact' → user wants only the title (manual choice wins)
-//   'hidden'  → user wants nothing (manual choice wins)
-// Plus an auto-collapsed flag that ONLY collapses (to title-only) on
-// scroll-down and re-expands on scroll-up — never fights the user.
+// Auto-hide on scroll-down / show on scroll-up. Only fires when in 'full'
+// mode — manual 'compact' or 'hidden' are user choices we never override.
 let lastY = window.scrollY;
 let autoCollapsed = false;
 window.addEventListener('scroll', () => {
   const y = window.scrollY;
+  // Manual choice wins — never touch the header, but keep lastY fresh
+  // so when the user toggles back to 'full' the next scroll behaves.
   if (headerMode !== 'full') { lastY = y; return; }
-  if (y > lastY && y > 80) {
+  // Use a small threshold so a single wheel tick doesn't fire collapse.
+  const delta = y - lastY;
+  if (delta > 4 && y > 80) {
     if (!autoCollapsed) {
       HEADER.classList.add('is-collapsed');
       autoCollapsed = true;
     }
-  } else if (y < lastY) {
+  } else if (delta < -4) {
     if (autoCollapsed) {
       HEADER.classList.remove('is-collapsed');
       autoCollapsed = false;
