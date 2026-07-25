@@ -32,27 +32,25 @@
   <section class="preview-block" data-type="{{ block.type }}">
     <h2 class="preview-section-name">{{ block.name }}</h2>
     {% for line in block.lines %}
-    <div class="preview-line">
-      <div class="preview-chord-line">
-        {% set chars = line.text %}
-        {% set ns = namespace(chord_map={}) %}
-        {% for c in line.chords %}
-          {% set ns.chord_map = ns.chord_map.update({c.position: c.symbol}) or ns.chord_map %}
-        {% endfor %}
-        {% if line.chords %}
-          {% set max_pos = line.chords|map(attribute='position')|max %}
-          {% set ns2 = namespace(out='') %}
-          {% for i in range(max_pos + 12) %}
-            {% if i in ns.chord_map %}
-              {% set ns2.out = ns2.out + ns.chord_map[i] %}
-            {% else %}
-              {% set ns2.out = ns2.out + ' ' %}
-            {% endif %}
-          {% endfor %}
-          {{ ns2.out }}
+    {% set chord_map = {} %}
+    {% for c in (line.chords or []) %}
+      {% set _ = chord_map.update({c.position: c.symbol}) %}
+    {% endfor %}
+    {% set max_pos = (line.chords|map(attribute='position')|max) if line.chords else 0 %}
+    {% set chord_line_chars = namespace(out='') %}
+    {% if line.text %}
+      {% set width = [max_pos + line.text|length + 2, 80]|max %}
+      {% for i in range(width) %}
+        {% if i in chord_map %}
+          {% set chord_line_chars.out = chord_line_chars.out + chord_map[i] %}
+        {% elif i < line.text|length %}
+          {% set chord_line_chars.out = chord_line_chars.out + ' ' %}
         {% endif %}
-      </div>
-      <div class="preview-text-line">{{ line.text }}</div>
+      {% endfor %}
+    {% endif %}
+    <div class="preview-line">
+      <div class="preview-chord-row">{{ chord_line_chars.out }}</div>
+      <div class="preview-text-row">{{ line.text }}</div>
     </div>
     {% endfor %}
   </section>

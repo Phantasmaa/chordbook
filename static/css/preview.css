@@ -10,6 +10,8 @@ body {
   line-height: 1.6;
 }
 
+.preview-mode { padding-bottom: 80px; }
+
 .preview-wrap {
   max-width: 760px;
   margin: 0 auto;
@@ -26,7 +28,8 @@ body {
   font-weight: 700;
   margin: 0 0 4px;
 }
-.preview-header .meta {
+.preview-header .meta,
+.preview-meta {
   color: #9ca3af;
   font-size: 14px;
   display: flex;
@@ -34,8 +37,17 @@ body {
   flex-wrap: wrap;
   margin-top: 8px;
 }
-.preview-header .meta strong { color: #eaeaea; }
-.preview-actions {
+.preview-header .meta strong,
+.preview-meta strong { color: #eaeaea; }
+.key-badge {
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.preview-actions,
+.preview-controls {
   position: sticky;
   top: 12px;
   display: flex;
@@ -46,8 +58,10 @@ body {
   padding: 8px;
   border-radius: 8px;
   backdrop-filter: blur(8px);
+  align-items: center;
 }
-.preview-actions a, .preview-actions button {
+.preview-actions a, .preview-actions button,
+.preview-controls button {
   background: #27272a;
   color: #eaeaea;
   border: none;
@@ -57,43 +71,54 @@ body {
   cursor: pointer;
   text-decoration: none;
 }
-.preview-actions a.primary, .preview-actions button.primary {
+.preview-actions a.primary, .preview-actions button.primary,
+.preview-controls button.primary {
   background: #7c3aed;
   color: white;
 }
-.preview-actions a:hover, .preview-actions button:hover { opacity: 0.85; }
+.preview-actions a:hover, .preview-actions button:hover,
+.preview-controls button:hover { opacity: 0.85; }
+.preview-controls .separator { color: #4b5563; padding: 0 4px; }
 
-.block {
+.preview-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.preview-block {
   margin-bottom: 32px;
 }
-.block-name {
-  font-size: 12px;
+.preview-block .preview-section-name {
+  font-size: 13px;
   font-weight: 700;
   color: #7c3aed;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 12px;
-  padding-bottom: 4px;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #27272a;
 }
-.line {
-  margin-bottom: 12px;
+.preview-line {
+  margin-bottom: 14px;
   font-family: 'Georgia', 'Times New Roman', serif;
 }
-.chord-line {
+.preview-line .preview-chord-row {
   color: #fbbf24;
-  font-weight: 600;
-  font-family: 'JetBrains Mono', 'Menlo', monospace;
-  font-size: 16px;
-  min-height: 1.2em;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 15px;
+  min-height: 1.3em;
   white-space: pre;
   letter-spacing: 0.02em;
   margin-bottom: 2px;
+  line-height: 1.2;
 }
-.lyric-line {
+.preview-line .preview-text-row {
   color: #eaeaea;
   white-space: pre-wrap;
   font-size: 18px;
+  line-height: 1.5;
 }
 
 .transpose-controls {
@@ -121,3 +146,4 @@ body {
   font-weight: 600;
   font-size: 14px;
 }
+

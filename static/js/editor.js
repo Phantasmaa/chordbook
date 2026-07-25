@@ -3,7 +3,7 @@
 // auto-save, transpose, export.
 
 const SONG = JSON.parse(document.getElementById('song-data').textContent);
-const SONG_ID = SONG.id;
+let SONG_ID = SONG.id;  // null for new songs, set after first POST
 const container = document.getElementById('blocks-container');
 const statusEl = document.getElementById('save-status');
 let saveTimer = null;
@@ -59,6 +59,8 @@ function renderBlock(block, bi) {
   addLineBtn.className = 'add-line-btn';
   addLineBtn.textContent = '+ Agregar línea';
   addLineBtn.dataset.blockIdx = bi;
+  addLineBtn.dataset.action = 'add-line';
+  addLineBtn.dataset.lineIdx = '-1';  // signal: add at end
   linesEl.appendChild(addLineBtn);
 
   wrap.appendChild(linesEl);
@@ -295,6 +297,8 @@ async function saveNow() {
       });
       if (!resp.ok) throw new Error(await resp.text());
       const j = await resp.json();
+      SONG.id = j.id;
+      SONG_ID = j.id;
       window.history.replaceState({}, '', '/song/' + j.id);
       statusEl.textContent = '✓ Guardado';
       statusEl.className = 'save-status';
@@ -378,7 +382,16 @@ container.addEventListener('click', (e) => {
   else if (action === 'down') moveBlock(bi, 1);
   else if (action === 'dup') duplicateBlock(bi);
   else if (action === 'del') deleteBlock(bi);
-  else if (action === 'add-line') addLineAfter(bi, SONG.content.blocks[bi].lines.length - 1);
+  else if (action === 'add-line') {
+    const afterLi = +btn.dataset.lineIdx;
+    if (afterLi === -1) {
+      // Add at end of block
+      const lastIdx = SONG.content.blocks[bi].lines.length - 1;
+      addLineAfter(bi, lastIdx);
+    } else {
+      addLineAfter(bi, afterLi);
+    }
+  }
   else if (action === 'add-chord') {
     const textEl = btn.closest('.line').querySelector('.line-text');
     textEl.focus();
@@ -404,16 +417,17 @@ document.querySelectorAll('.btn-transpose').forEach(btn => {
   btn.addEventListener('click', () => transpose(btn.dataset.dir));
 });
 
-document.getElementById('btn-preview').addEventListener('click', () => {
-  saveNow().then(() => {
-    if (SONG_ID) window.open('/song/' + SONG_ID + '/preview', '_blank');
-  });
+document.getElementById('btn-preview').addEventListener('click', async () => {
+  // Cancel any pending debounced save and save immediately
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  await saveNow();
+  if (SONG_ID) window.location = '/song/' + SONG_ID + '/preview';
 });
 
-document.getElementById('btn-pdf').addEventListener('click', () => {
-  saveNow().then(() => {
-    if (SONG_ID) window.location = '/api/songs/' + SONG_ID + '/pdf';
-  });
+document.getElementById('btn-pdf').addEventListener('click', async () => {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  await saveNow();
+  if (SONG_ID) window.location = '/api/songs/' + SONG_ID + '/pdf';
 });
 
 document.getElementById('btn-delete').addEventListener('click', async () => {
