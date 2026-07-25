@@ -24,7 +24,14 @@
   <span id="transpose-amount">0</span>
   <button onclick="transpose(1)">+</button>
   <span class="separator">|</span>
-  <button onclick="toggleAutoScroll()">Auto-scroll</button>
+  <span class="scroll-speed-control" title="Velocidad del auto-scroll (ms por píxel)">
+    <button onclick="adjustSpeed(-10)" title="Más rápido">−</button>
+    <span id="scroll-speed-value">50</span>
+    <button onclick="adjustSpeed(10)" title="Más lento">+</button>
+    <span class="speed-label">ms</span>
+  </span>
+  <button id="auto-scroll-btn" onclick="toggleAutoScroll()" title="Iniciar / pausar auto-scroll">▶ Auto</button>
+  <span class="separator">|</span>
   <button id="toggle-header-btn" onclick="toggleHeader()" title="Mostrar / ocultar cabecera">⟪⟫ Cabecera</button>
   <span class="separator">|</span>
   <button onclick="window.print()">Imprimir</button>
@@ -67,19 +74,46 @@ function transpose(n) {
   url.searchParams.set('transpose', transposeAmount);
   window.location = url.toString();
 }
+// Auto-scroll: speed = ms per pixel of scroll. Lower = faster.
+// Persist in localStorage so the user's choice survives page reloads.
+let scrollSpeed = parseInt(localStorage.getItem('preview.scrollSpeed') || '50', 10);
 let scrolling = false, scrollTimer = null;
+const SCROLL_SPEED_MIN = 10, SCROLL_SPEED_MAX = 200;
+const SPEED_DISPLAY = document.getElementById('scroll-speed-value');
+const AUTO_BTN = document.getElementById('auto-scroll-btn');
+SPEED_DISPLAY.textContent = scrollSpeed;
+
+function adjustSpeed(delta) {
+  scrollSpeed = Math.max(SCROLL_SPEED_MIN, Math.min(SCROLL_SPEED_MAX, scrollSpeed + delta));
+  SPEED_DISPLAY.textContent = scrollSpeed;
+  localStorage.setItem('preview.scrollSpeed', scrollSpeed);
+  // If currently scrolling, restart the interval with the new speed.
+  if (scrolling) {
+    clearInterval(scrollTimer);
+    scrollTimer = setInterval(scrollStep, scrollSpeed);
+  }
+}
+
+function scrollStep() {
+  window.scrollBy(0, 1);
+  if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+    clearInterval(scrollTimer);
+    scrolling = false;
+    AUTO_BTN.textContent = '▶ Auto';
+    AUTO_BTN.classList.remove('active');
+  }
+}
+
 function toggleAutoScroll() {
   scrolling = !scrolling;
   if (scrolling) {
-    scrollTimer = setInterval(() => {
-      window.scrollBy(0, 1);
-      if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
-        clearInterval(scrollTimer);
-        scrolling = false;
-      }
-    }, 50);
+    scrollTimer = setInterval(scrollStep, scrollSpeed);
+    AUTO_BTN.textContent = '⏸ Pausa';
+    AUTO_BTN.classList.add('active');
   } else {
     clearInterval(scrollTimer);
+    AUTO_BTN.textContent = '▶ Auto';
+    AUTO_BTN.classList.remove('active');
   }
 }
 
