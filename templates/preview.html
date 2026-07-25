@@ -28,40 +28,10 @@
 </header>
 
 <main class="preview-content">
-{# Glyph per block type #}
-{% set glyph_map = {
-  'intro':      '▶',
-  'verse':      'V',
-  'chorus':     'C',
-  'bridge':     'P',
-  'outro':      '■',
-  'pre_chorus': 'PC',
-  'interlude':  'I',
-  'solo':       'S',
-} %}
-{% set ns = namespace(counts={}) %}
+{# No section markers (verso/coro/intro) — Manuel said remove them. #}
 {% for block in song.content.blocks %}
-  {% set sig = block.type ~ '|' ~ (block.lines[0].text if block.lines and block.lines[0].text else '') %}
-  {% if ns.counts.update({sig: ns.counts.get(sig, 0) + 1}) %}{% endif %}
-  {% set badge_type = block.type or 'verse' %}
-  {% set glyph = glyph_map.get(badge_type, 'V') %}
-  {% set repeat_n = ns.counts.get(sig, 0) %}
-  {% set block_label = block.name %}
-
-  {# Marker glyph + label inline at the very start of the first line,
-     not on its own line. Repeats get a small ×N pill. #}
   {% set first = (block.lines or [])[0] %}
   <section class="preview-block" data-type="{{ block.type }}">
-    {% if block.lines %}
-      <div class="preview-line">
-        <div class="preview-chord-row preview-chord-row-first">
-          <span class="preview-marker-inline {{ badge_type }}">
-            <span class="preview-marker-glyph">{{ glyph }}</span>
-            <span class="preview-marker-label">{{ block_label }}{% if repeat_n > 1 %} ×{{ repeat_n }}{% endif %}</span>
-          </span>
-        </div>
-      </div>
-    {% endif %}
     {% for line in block.lines %}
       {% set chord_map = {} %}
       {% for c in (line.chords or []) %}

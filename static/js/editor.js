@@ -44,67 +44,31 @@ function renderBlock(block, bi) {
   }
   const typeLabel = SECTION_LABELS[block.type] || block.type || 'Verso';
   const typeClass = 't' + (block.type || 'verse').replace('-', '_');
-  const glyphMap = {
-    intro: '▶', verse: 'V', chorus: 'C', bridge: 'P',
-    outro: '■', pre_chorus: 'PC', interlude: 'I', solo: 'S',
-  };
-  const glyph = glyphMap[typeClass.replace('t', '')] || 'V';
+  // Manuel: no more verso/coro/intro markers. Just the section name (if any)
+  // and the controls inline. No glyph, no badge.
   const repeatPill = occur > 1
     ? ` <span class="block-repeat-pill">×${occur}</span>` : '';
 
-  // Store section info on the wrap so CSS can color it AND lines can show the marker
+  // Store section info on the wrap so CSS can color it if needed
   wrap.dataset.sectionType = block.type || 'verse';
-  wrap.dataset.sectionGlyph = glyph;
   wrap.dataset.sectionLabel = typeLabel;
 
-  // Marker row: thin inline pill at the very start of the block — NOT a full row.
-  // Just a small symbol + section name + repeat pill, all inline with the first line.
-  // Rendered as a single flex row together with the first line so it sits at the
-  // left margin without taking a whole line of vertical space.
-  if (block.lines.length > 0) {
-    const markerRow = document.createElement('div');
-    markerRow.className = `block-marker-row ${typeClass}`;
-    // Show the section name only if it differs from the type label,
-    // otherwise the block name input would just duplicate "VERSO" / "INTRO".
-    const customName = (block.name || '').trim();
-    const typeNormalized = (block.type || 'verse').toLowerCase();
-    const sectionLabel = typeLabel; // "Intro" / "Verso" / "Coro" / "Puente"
-    const showCustomName = customName
-      && customName.toLowerCase() !== typeNormalized
-      && customName.toUpperCase() !== sectionLabel.toUpperCase()
-      && !/^verse\s*\d+/i.test(customName)
-      && !/^verso\s*\d+/i.test(customName)
-      && !/^chorus\s*\d*/i.test(customName)
-      && !/^coro\s*\d*/i.test(customName);
-    markerRow.innerHTML =
-      `<span class="block-marker-glyph">${glyph}</span>` +
-      `<span class="block-marker-label">${sectionLabel}</span>` +
-      (showCustomName ? `<span class="block-marker-name">${escapeHtml(customName)}</span>` : '') +
-      repeatPill +
-      `<div class="block-controls">` +
-        `<button title="Mover arriba" data-action="up" data-block-idx="${bi}">↑</button>` +
-        `<button title="Mover abajo" data-action="down" data-block-idx="${bi}">↓</button>` +
-        `<button title="Duplicar" data-action="dup" data-block-idx="${bi}">⎘</button>` +
-        `<button title="Eliminar" class="danger" data-action="del" data-block-idx="${bi}">🗑</button>` +
-      `</div>`;
-    wrap.appendChild(markerRow);
-  } else {
-    // Empty block — show a single small marker + controls in a row
-    const markerRow = document.createElement('div');
-    markerRow.className = `block-marker-row ${typeClass} is-empty`;
-    markerRow.innerHTML =
-      `<span class="block-marker-glyph">${glyph}</span>` +
-      `<span class="block-marker-label">${typeLabel}</span>` +
-      `<span class="block-marker-name">${escapeHtml(block.name || '')}</span>` +
-      repeatPill +
-      `<div class="block-controls">` +
-        `<button title="Mover arriba" data-action="up" data-block-idx="${bi}">↑</button>` +
-        `<button title="Mover abajo" data-action="down" data-block-idx="${bi}">↓</button>` +
-        `<button title="Duplicar" data-action="dup" data-block-idx="${bi}">⎘</button>` +
-        `<button title="Eliminar" class="danger" data-action="del" data-block-idx="${bi}">🗑</button>` +
-      `</div>`;
-    wrap.appendChild(markerRow);
-  }
+  // Marker row: completely hidden by default via CSS. Kept as a placeholder
+  // for the section name input + controls (visible on hover).
+  const markerRow = document.createElement('div');
+  markerRow.className = `block-marker-row ${typeClass} is-hidden`;
+  markerRow.innerHTML =
+    `<span class="block-marker-glyph"></span>` +
+    `<span class="block-marker-label">${typeLabel}</span>` +
+    `<span class="block-marker-name">${escapeHtml(block.name || '')}</span>` +
+    repeatPill +
+    `<div class="block-controls">` +
+      `<button title="Mover arriba" data-action="up" data-block-idx="${bi}">↑</button>` +
+      `<button title="Mover abajo" data-action="down" data-block-idx="${bi}">↓</button>` +
+      `<button title="Duplicar" data-action="dup" data-block-idx="${bi}">⎘</button>` +
+      `<button title="Eliminar" class="danger" data-action="del" data-block-idx="${bi}">🗑</button>` +
+    `</div>`;
+  wrap.appendChild(markerRow);
 
   // Lines container
   const linesEl = document.createElement('div');

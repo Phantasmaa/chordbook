@@ -226,7 +226,9 @@ main { padding-bottom: 80px; }
    Just a small glyph + abbreviated label, separated from lyrics by
    enough horizontal space to be readable but not intrusive. */
 .block-marker-row {
-  display: flex;
+  /* Hidden by default — Manuel said no more verso/coro labels.
+     The row exists in the DOM for accessibility / hover controls only. */
+  display: none;
   align-items: center;
   gap: 6px;
   padding: 6px 14px 2px;
@@ -235,6 +237,14 @@ main { padding-bottom: 80px; }
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
+.block:hover .block-marker-row,
+.block:focus-within .block-marker-row {
+  display: flex;
+}
+.block-marker-row .block-marker-glyph { display: none; }
+.block-marker-row .block-marker-label { display: none; }
+.block-marker-row .block-marker-name { display: none; }
+.block-marker-row .block-repeat-pill { display: none; }
 .block-marker-row .block-marker-glyph {
   display: inline-flex;
   align-items: center;

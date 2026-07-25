@@ -282,28 +282,25 @@ def import_lacuerda():
             "lines": [{"text": "", "chords": intro_chords}],
         })
 
-    # Group consecutive blocks of identical type as the same section
-    # (LaCuerda repeats verses since it doesn't label each part).
-    section_counters = {"VERSO": 1, "CORO": 1, "PUENTE": 1}
-    seen_signatures: Dict[Tuple, int] = {}
-
-    def block_signature(raw_block: Dict) -> Tuple:
-        """Signature for detecting repeated blocks (acts as CORO heuristic).
-        We ignore the chord positions because transcribers often differ slightly
-        on chord placement between repetitions; only the lyric matters."""
-        return tuple(
-            (ln["text"] or "").strip() for ln in raw_block.get("lines", [])
-        )
-
-    # First pass: classify blocks. Repeated text -> CORO; first occurrence -> VERSO.
+    # Plain pass: every block keeps the section name it was parsed with.
+    # No VERSO N / CORO N numbering — Manuel wants the original label only.
     classified: List[Tuple[str, Dict]] = []
     for raw in parsed["blocks"]:
-        sig = block_signature(raw)
-        if sig in seen_signatures and len(sig) > 0:
-            classified.append(("CORO", raw))
-        else:
-            seen_signatures[sig] = len(classified)
-            classified.append(("VERSO", raw))  # default to VERSO on first sight
+        # If the parser gave it a name like "VERSO" or "INTRO", keep it.
+        # Otherwise default to "VERSO".
+        raw_name = (raw.get("name") or "VERSO").strip()
+        classified.append((raw_name, raw))
+
+    type_map = {
+        "INTRO": "intro",
+        "VERSO": "verse",
+        "CORO": "chorus",
+        "PUENTE": "bridge",
+        "OUTRO": "outro",
+        "PRE-CORO": "pre-chorus",
+        "INTERLUDIO": "interlude",
+        "SOLO": "solo",
+    }
 
     for base_name, raw in classified:
         lines = [
@@ -316,23 +313,9 @@ def import_lacuerda():
             }
             for ln in raw["lines"]
         ]
-        n = section_counters.get(base_name, None)
-        name = f"{base_name} {n}" if n else base_name
-        if n:
-            section_counters[base_name] = n + 1
-        type_map = {
-            "INTRO": "intro",
-            "VERSO": "verse",
-            "CORO": "chorus",
-            "PUENTE": "bridge",
-            "OUTRO": "outro",
-            "PRE-CORO": "pre-chorus",
-            "INTERLUDIO": "interlude",
-            "SOLO": "solo",
-        }
         blocks.append({
             "type": type_map.get(base_name, "verse"),
-            "name": name,
+            "name": base_name,
             "lines": lines,
         })
 

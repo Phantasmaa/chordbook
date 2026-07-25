@@ -130,7 +130,9 @@ body {
   margin-bottom: 4px;
 }
 
-/* Legacy badge — hidden (replaced by inline marker). */
+/* Legacy marker / section name — Manuel removed verso/coro entirely.
+   Hide them so any leftover rule from an older render is invisible. */
+.preview-marker-inline { display: none !important; }
 .preview-section-badge { display: none !important; }
 .preview-section-name  { display: none !important; }
 

@@ -90,7 +90,8 @@ h1.song-title {
 
 /* Legacy full-width badge — hidden (replaced by inline marker). */
 .section-badge,
-.block-repeat { display: none !important; }
+.block-repeat,
+.block-marker { display: none !important; }
 
 /* Legacy left-bar by type — REMOVED (border-left: 0 on .block above). */
 
@@ -146,41 +147,11 @@ h1.song-title {
 </div>
 {% endif %}
 
-{# Glyphs per block type #}
-{% set glyph_map = {
-  'intro':      '▶',
-  'verse':      'V',
-  'chorus':     'C',
-  'bridge':     'P',
-  'outro':      '■',
-  'pre_chorus': 'PC',
-  'interlude':  'I',
-  'solo':       'S',
-} %}
-{# Track how many times each section name appears in this song #}
-{% set ns = namespace(counts={}) %}
+{# No section markers (verso/coro/intro) — Manuel said remove them.
+   Just render the chord + lyric lines directly. #}
 
 {% for block in song.content.blocks %}
-  {# Normalize the block for repeat detection: type + first non-empty line text #}
-  {% set sig = block.type ~ '|' ~ (block.lines[0].text if block.lines and block.lines[0].text else '') %}
-  {% if ns.counts.update({sig: ns.counts.get(sig, 0) + 1}) %}{% endif %}
-  {% set badge_type = block.type or 'verse' %}
-  {% set glyph = glyph_map.get(badge_type, 'V') %}
-  {% set block_label = block.name %}
-  {% set repeat_n = ns.counts.get(sig, 0) %}
-  {% if repeat_n > 1 %}
-    {% set block_label = block_label ~ ' (×' ~ repeat_n ~ ')' %}
-  {% endif %}
-
   <div class="block block-{{ block.type }}">
-    {# Marker row: small glyph + label, rendered as a compact inline
-       pill on its own tight row — NOT as a full-width badge that
-       inflates the block. Below it, the first line's chord-row sits
-       right under the marker. #}
-    <div class="block-marker {{ badge_type }}">
-      <span class="marker-glyph">{{ glyph }}</span>
-      <span class="marker-label">{{ block_label }}</span>
-    </div>
     {% for line in block.lines %}
       <div class="line{% if line.text and line.text.startswith('  ') %} indent{% endif %}">
         <div class="chord-line">{{ _chord_alignment(line.chords, line.text) }}</div>
