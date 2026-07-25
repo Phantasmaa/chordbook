@@ -240,11 +240,65 @@ def setlist_view(setlist_id):
         WHERE ss.setlist_id = ?
         ORDER BY ss.position
     """, (setlist_id,)).fetchall()
+    all_songs_rows = db.execute(
+        "SELECT id, title, artist FROM songs ORDER BY title COLLATE NOCASE"
+    ).fetchall()
+    all_songs = [dict(r) for r in all_songs_rows]
     db.close()
-    return render_template("setlist.html", setlist=dict(sl), songs=[dict(r) for r in songs])
+    setlist_dict = dict(sl)
+    setlist_dict["songs"] = [dict(r) for r in songs]
+    return render_template(
+        "setlist.html",
+        setlist=setlist_dict,
+        songs=[dict(r) for r in songs],
+        all_songs=all_songs,
+    )
 
 
 # ---------- Routes: API ----------
+
+@app.route("/api/setlists/<int:setlist_id>/songs", methods=["POST"])
+def api_setlist_modify_songs(setlist_id):
+    data = request.get_json() or {}
+    add_ids = data.get("add") or []
+    remove_ids = data.get("remove") or []
+    if not isinstance(add_ids, list) or not isinstance(remove_ids, list):
+        return jsonify({"error": "add/remove must be arrays"}), 400
+    db = get_db()
+    if not db.execute("SELECT id FROM setlists WHERE id = ?", (setlist_id,)).fetchone():
+        db.close()
+        return jsonify({"error": "setlist not found"}), 404
+    next_pos = db.execute(
+        "SELECT COALESCE(MAX(position), 0) AS p FROM setlist_songs WHERE setlist_id = ?",
+        (setlist_id,),
+    ).fetchone()["p"]
+    for song_id in add_ids:
+        try:
+            song_id = int(song_id)
+        except (TypeError, ValueError):
+            continue
+        if not db.execute("SELECT id FROM songs WHERE id = ?", (song_id,)).fetchone():
+            db.close()
+            return jsonify({"error": f"song {song_id} not found"}), 404
+        next_pos += 1
+        db.execute(
+            """INSERT OR IGNORE INTO setlist_songs (setlist_id, song_id, position)
+               VALUES (?, ?, ?)""",
+            (setlist_id, song_id, next_pos),
+        )
+    for song_id in remove_ids:
+        try:
+            song_id = int(song_id)
+        except (TypeError, ValueError):
+            continue
+        db.execute(
+            "DELETE FROM setlist_songs WHERE setlist_id = ? AND song_id = ?",
+            (setlist_id, song_id),
+        )
+    db.commit()
+    db.close()
+    return jsonify({"ok": True})
+
 
 @app.route("/api/import/lacuerda", methods=["POST"])
 def import_lacuerda():
