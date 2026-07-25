@@ -16,11 +16,32 @@ body {
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #27272a;
+  transition: max-height 0.32s ease, opacity 0.2s ease, padding 0.2s ease, margin 0.2s ease;
+  overflow: hidden;
+  max-height: 400px;
 }
 .preview-header h1 {
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 4px;
+}
+/* Cuando la cabecera está colapsada, esconde meta y deja solo el título. */
+.preview-header.is-collapsed .preview-meta { display: none; }
+.preview-header.is-collapsed {
+  padding-bottom: 0;
+  border-bottom: none;
+  margin-bottom: 8px;
+  max-height: 60px;
+}
+.preview-header.is-collapsed h1 { font-size: 18px; }
+/* Modo totalmente oculto (toggle "Hide header" / scroll abajo) */
+.preview-header.is-hidden {
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
 }
 .preview-meta {
   color: #9ca3af;
@@ -65,6 +86,7 @@ body {
   color: white;
 }
 .preview-controls button:hover { opacity: 0.85; }
+.preview-controls button.active { background: #7c3aed; color: white; }
 .preview-controls .separator { color: #4b5563; padding: 0 4px; }
 
 .preview-content {

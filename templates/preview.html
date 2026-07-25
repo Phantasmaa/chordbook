@@ -23,6 +23,8 @@
     <button onclick="transpose(1)">+</button>
     <span class="separator">|</span>
     <button onclick="toggleAutoScroll()">Auto-scroll</button>
+    <button id="toggle-header-btn" onclick="toggleHeader()" title="Mostrar / ocultar cabecera">⟪⟫ Cabecera</button>
+    <span class="separator">|</span>
     <button onclick="window.print()">Imprimir</button>
   </div>
 </header>
@@ -86,6 +88,56 @@ function toggleAutoScroll() {
     clearInterval(scrollTimer);
   }
 }
+
+// ----- Header collapse / hide controls --------------------------------------
+const HEADER  = document.querySelector('.preview-header');
+const TOG_BTN = document.getElementById('toggle-header-btn');
+// Three states: 'full' (title + meta) → 'compact' (title only) → 'hidden' (off).
+let headerMode = localStorage.getItem('preview.headerMode') || 'full';
+applyHeaderMode();
+
+function toggleHeader() {
+  headerMode = (headerMode === 'full') ? 'compact'
+             : (headerMode === 'compact') ? 'hidden'
+             : 'full';
+  applyHeaderMode();
+  localStorage.setItem('preview.headerMode', headerMode);
+}
+
+function applyHeaderMode() {
+  HEADER.classList.remove('is-collapsed', 'is-hidden');
+  if (headerMode === 'compact') HEADER.classList.add('is-collapsed');
+  if (headerMode === 'hidden')  HEADER.classList.add('is-hidden');
+  TOG_BTN.textContent = (headerMode === 'hidden')  ? 'Mostrar cabecera'
+                      : (headerMode === 'compact') ? '⟪⟫ Cabecera'
+                      : 'Ocultar cabecera';
+  TOG_BTN.classList.toggle('active', headerMode !== 'full');
+}
+
+// Auto-hide on scroll-down / show on scroll-up. Three modes:
+//   'full'    → user wants everything visible
+//   'compact' → user wants only the title (manual choice wins)
+//   'hidden'  → user wants nothing (manual choice wins)
+// Plus an auto-collapsed flag that ONLY collapses (to title-only) on
+// scroll-down and re-expands on scroll-up — never fights the user.
+let lastY = window.scrollY;
+let autoCollapsed = false;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  if (headerMode !== 'full') { lastY = y; return; }
+  if (y > lastY && y > 80) {
+    if (!autoCollapsed) {
+      HEADER.classList.add('is-collapsed');
+      autoCollapsed = true;
+    }
+  } else if (y < lastY) {
+    if (autoCollapsed) {
+      HEADER.classList.remove('is-collapsed');
+      autoCollapsed = false;
+    }
+  }
+  lastY = y;
+}, { passive: true });
 </script>
 </body>
 </html>
