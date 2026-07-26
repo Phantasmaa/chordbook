@@ -65,6 +65,26 @@ input, select, textarea { font: inherit; }
   font-weight: 600;
 }
 .nav-btn:hover { background: var(--accent-hover); color: white; }
+.nav-btn-ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.nav-btn-ghost:hover { background: var(--accent); color: white; }
+.nav-link-ghost { opacity: 0.65; }
+.nav-link-ghost:hover { opacity: 1; }
+.nav-user {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 main { padding-bottom: 80px; }
 

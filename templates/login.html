@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Chordbook · Login{% endblock %}
+{% block content %}
+<style>
+.auth-shell {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(20, 20, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 28px 22px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #ffd54f;
+  text-align: center;
+}
+.auth-sub {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  margin: 0 0 22px;
+}
+.auth-field {
+  display: block;
+  margin-bottom: 14px;
+}
+.auth-field label {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.auth-field input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #f5f5f7;
+  font-size: 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.auth-field input:focus {
+  outline: none;
+  border-color: #ffd54f;
+  background: rgba(0, 0, 0, 0.6);
+}
+.auth-submit {
+  width: 100%;
+  padding: 13px;
+  background: #ffd54f;
+  color: #14141a;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.auth-submit:active {
+  transform: translateY(1px);
+}
+.auth-error {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #ff8a80;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.auth-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin-top: 18px;
+}
+</style>
+
+<div class="auth-shell">
+  <form class="auth-card" method="POST" action="{{ url_for('auth.login') }}">
+    <div class="auth-title">🎸 Chordbook</div>
+    <div class="auth-sub">Iniciá sesión para cantar</div>
+
+    {% if error %}
+      <div class="auth-error">{{ error }}</div>
+    {% endif %}
+
+    <label class="auth-field">
+      <label>Usuario</label>
+      <input type="text" name="username" autocomplete="username" autofocus required>
+    </label>
+
+    <label class="auth-field">
+      <label>Contraseña</label>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+
+    <button type="submit" class="auth-submit">Entrar</button>
+
+    <div class="auth-hint">
+      Misma cuenta que usás en Mis Finanzas
+    </div>
+  </form>
+</div>
+{% endblock %}

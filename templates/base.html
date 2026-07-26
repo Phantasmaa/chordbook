@@ -16,7 +16,17 @@
   <a href="{{ url_for('index') }}" class="brand">🎸 Chordbook</a>
   <div class="nav-actions">
     <a href="{{ url_for('setlists_index') }}" class="nav-link">Setlists</a>
-    <a href="{{ url_for('new_song') }}" class="nav-btn">+ Nueva</a>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+      <a href="{{ url_for('new_song') }}" class="nav-btn">+ Nueva</a>
+    {% endif %}
+    {% if current_user.is_authenticated %}
+      <span class="nav-user" title="{{ current_user.username }}">
+        {% if current_user.nombre %}{{ current_user.nombre }}{% else %}{{ current_user.username }}{% endif %}
+      </span>
+      <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-ghost">Salir</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}" class="nav-btn nav-btn-ghost">Entrar</a>
+    {% endif %}
   </div>
 </nav>
 

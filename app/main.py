@@ -17,11 +17,13 @@ from flask import (
     Flask, abort, jsonify, redirect, render_template,
     request, send_file, url_for,
 )
+from flask_login import current_user, login_required
 
 from app.chord_engine import (
     transpose_chord, transpose_song, validate_chord,
     parse_chord_line, format_chord_display,
 )
+from app.auth import auth_bp, admin_required, init_login
 
 # Lazy import — LaCuerda scraper pulls in `requests`, only loaded on demand
 def _lacuerda_fetch(url):
@@ -47,6 +49,28 @@ FLAT_TO_SHARP = {v: k for k, v in SHARP_TO_FLAT.items()}
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"), static_folder=str(BASE_DIR / "static"))
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB upload cap
+
+# ── Auth: same users DB as pennypath (mis-finanzas) ──────────────────────
+# Read FLASK_SECRET from env (set in systemd unit) so cookies/sessions
+# survive restarts. Falls back to a dev-secret if missing.
+import os as _os
+from datetime import timedelta
+app.config["SECRET_KEY"] = _os.environ.get("FLASK_SECRET", "chordbook-dev-secret-change-me")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"]  = True
+app.config["SESSION_COOKIE_NAME"]      = "chordbook_session"
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=90)
+app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=90)
+
+# Force sessions to be permanent (persistent cookie = 90 days)
+@app.before_request
+def _make_session_permanent():
+    from flask import session
+    session.permanent = True
+
+init_login(app)
+app.register_blueprint(auth_bp)
 
 
 def _chord_alignment(chords, text):
@@ -185,6 +209,8 @@ def index():
 
 
 @app.route("/song/<int:song_id>")
+@login_required
+@admin_required
 def song_editor(song_id):
     song = get_song_or_404(song_id)
     return render_template("editor.html", song=song, keys_sharp=KEYS_SHARP, keys_flat=KEYS_FLAT)
@@ -200,6 +226,8 @@ def song_preview(song_id):
 
 
 @app.route("/new")
+@login_required
+@admin_required
 def new_song():
     return render_template("editor.html", song={
         "id": None,
@@ -258,6 +286,7 @@ def setlist_view(setlist_id):
 # ---------- Routes: API ----------
 
 @app.route("/api/setlists/<int:setlist_id>/songs", methods=["POST"])
+@admin_required
 def api_setlist_modify_songs(setlist_id):
     data = request.get_json() or {}
     add_ids = data.get("add") or []
@@ -311,6 +340,7 @@ def api_setlist_modify_songs(setlist_id):
 
 
 @app.route("/api/import/lacuerda", methods=["POST"])
+@admin_required
 def import_lacuerda():
     """
     Body: { "url": "https://acordes.lacuerda.net/gatos/la_balsa.shtml" }
@@ -425,6 +455,7 @@ def import_lacuerda():
 
 
 @app.route("/api/import/lacuerda/save", methods=["POST"])
+@admin_required
 def import_lacuerda_save():
     """
     Single-shot: scrape LaCuerda + persist to DB + return song id.
@@ -492,6 +523,7 @@ def import_lacuerda_save():
 
 
 @app.route("/api/songs", methods=["POST"])
+@admin_required
 def create_song():
     data = request.get_json(force=True)
     if not data.get("title"):
@@ -522,6 +554,7 @@ def create_song():
 
 
 @app.route("/api/songs/<int:song_id>", methods=["PUT"])
+@admin_required
 def update_song(song_id):
     data = request.get_json(force=True)
     db = get_db()
@@ -556,6 +589,7 @@ def update_song(song_id):
 
 
 @app.route("/api/songs/<int:song_id>", methods=["DELETE"])
+@admin_required
 def delete_song(song_id):
     db = get_db()
     db.execute("DELETE FROM songs WHERE id = ?", (song_id,))
@@ -625,6 +659,7 @@ def export_pdf(song_id):
 
 
 @app.route("/api/setlists", methods=["POST"])
+@admin_required
 def create_setlist():
     data = request.get_json(force=True)
     if not data.get("name"):
@@ -638,6 +673,7 @@ def create_setlist():
 
 
 @app.route("/setlist/<int:setlist_id>/delete", methods=["POST"])
+@admin_required
 def delete_setlist(setlist_id):
     db = get_db()
     db.execute("DELETE FROM setlists WHERE id = ?", (setlist_id,))
@@ -647,6 +683,7 @@ def delete_setlist(setlist_id):
 
 
 @app.route("/setlist/<int:setlist_id>/remove/<int:song_id>", methods=["POST"])
+@admin_required
 def remove_from_setlist(setlist_id, song_id):
     db = get_db()
     db.execute("DELETE FROM setlist_songs WHERE setlist_id = ? AND song_id = ?",
@@ -657,6 +694,7 @@ def remove_from_setlist(setlist_id, song_id):
 
 
 @app.route("/song/<int:song_id>/add-to-setlist", methods=["POST"])
+@admin_required
 def add_to_setlist(song_id):
     setlist_id = request.form.get("setlist_id", type=int)
     if not setlist_id:
@@ -727,6 +765,7 @@ def _key_diff(from_key, to_key):
 # ---------- Lyrics import (paste from internet) ----------
 
 @app.route("/api/songs/import", methods=["POST"])
+@admin_required
 def import_lyrics():
     """Parse raw lyrics text, optionally with chords above."""
     data = request.get_json(force=True)
